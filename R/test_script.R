@@ -1,23 +1,61 @@
 library(tidyverse)
 library(tidytext)
 
-SM_dat <- read_csv("Social Media data.csv")
+# read in and prepare data
+key <- read_csv("data/Key.csv")
 
-# Let's do one example - Q34 "Wrist Flexion/Curl"
+data_path <- "./data"
+files <- dir(data_path, pattern = "Exercise Names Survey*")
 
-SM_token_Q34 <- SM_dat %>%
-  select(ResponseId, Q33, Q34) %>%
-  unnest_tokens(word, Q34)
+data <- tibble(survey = files) %>%
+  mutate(file_contents = map(survey,
+                             ~ read_csv(file.path(data_path, .)))
+  )
 
+data_useful <- unnest(data, cols = file_contents) %>%
+  mutate(survey = case_when(survey == files[1] ~ "NSCA",
+                            survey == files[2] ~ "Social Media",
+                            survey == files[3] ~ "Virtruvian")
+         )
+
+
+data_long <- pivot_longer(
+  data = data_useful,
+  cols = c(24:65,67:74),
+  names_to = "question",
+  values_to = "response"
+
+)
+
+data_long <- left_join(data_long, key, by="question")
+
+data <- data_long %>%
+  mutate(question_wording = case_when(
+    question_wording == "What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below."
+    ~ "response_name",
+    question_wording == "Do you recognise this exercise?"
+    ~ "recognise"
+  )) %>%
+  pivot_wider(id_cols = c(ResponseId,book_exercise_name),
+              names_from = question_wording,
+              values_from = response,
+              unused_fn = max)
+
+
+# Let's create tokens
 data("stop_words")
 
-SM_token_Q34 <- SM_token_Q34 %>%
+data_tokens <- data %>%
+  select(ResponseId, book_exercise_name,
+         body_position, body_part, action, equipment, equipment_position, action_direction, misc,
+         recognise, response_name) %>%
+  unnest_tokens(word, response_name) %>%
   anti_join(stop_words) %>%
-  filter(!is.na(word) & !is.na(Q33))
+  filter(!is.na(word) & !is.na(recognise))
 
 # spelling errors - https://books.psychstat.org/textmining/data.html
-library(hunspell)
-words <- unique(SM_token_Q34$word)
+# library(hunspell)
+words <- unique(data_tokens$word)
 bad_words <- hunspell(words)
 bad_words <- unique(unlist(bad_words))
 suggest_words <- hunspell_suggest(bad_words)
@@ -25,15 +63,15 @@ suggest_words <- unlist(lapply(suggest_words, function(x) x[1]))
 
 ### Add checking the suggestions
 
-library(stringi)
+# library(stringi)
 
 bad.whole.words <- paste0("\\b", bad_words, "\\b")
 
-SM_token_Q34$word_check <- stri_replace_all_regex(SM_token_Q34$word, bad.whole.words, suggest_words,
+data_tokens$word_check <- stri_replace_all_regex(data_tokens$word, bad.whole.words, suggest_words,
                                             vectorize_all = FALSE)
 
 # Plot simple counts
-SM_token_Q34 %>%
+data_tokens %>%
   count(word, sort = TRUE) %>%
   # filter(n > 600) %>%
   mutate(word = reorder(word, n)) %>%
@@ -45,12 +83,12 @@ SM_token_Q34 %>%
 # plot relationships between word use across categorical variable
 library(scales)
 
-SM_token_Q34 %>%
-  count(Q33, word) %>%
-  group_by(Q33) %>%
+data_tokens %>%
+  count(recognise, word) %>%
+  group_by(recognise) %>%
   mutate(proportion = n / sum(n)) %>%
   select(-n) %>%
-  pivot_wider(names_from = Q33, values_from = proportion) %>%
+  pivot_wider(names_from = recognise, values_from = proportion) %>%
   ggplot(aes(x = NO, y = YES)) +
   geom_abline(color = "gray40", lty = 2) +
   geom_point(alpha = 0.1, size = 2.5) +
@@ -65,41 +103,42 @@ SM_token_Q34 %>%
 # A word cloud
 library(wordcloud)
 
-SM_token_Q34 %>%
+data_tokens %>%
   count(word) %>%
   with(wordcloud(word, n, max.words = 100))
 
-SM_token_Q34 %>%
-  count(word, Q33) %>%
-  reshape2::acast(word ~ Q33, value.var = "n", fill = 0) %>%
+data_tokens %>%
+  filter(!is.na(recognise)) %>%
+  count(word, recognise) %>%
+  reshape2::acast(word ~ recognise, value.var = "n", fill = 0) %>%
   comparison.cloud(colors = c("gray20", "gray80"),
                    max.words = 100)
 
 # What about using the term frequency?
-recognise_words <- SM_token_Q34 %>%
-  count(Q33, word, sort = TRUE)
+recognise_words <- data_tokens %>%
+  count(recognise, word, sort = TRUE)
 
 total_words <- recognise_words %>%
-  group_by(Q33) %>%
+  group_by(recognise) %>%
   summarize(total = sum(n))
 
 recognise_words <- left_join(recognise_words, total_words)
 
-ggplot(recognise_words, aes(n/total, fill = Q33)) +
+ggplot(recognise_words, aes(n/total, fill = recognise)) +
   geom_histogram(show.legend = FALSE) +
-  facet_wrap(~Q33, ncol = 2, scales = "free_y") +
+  facet_wrap(~recognise, ncol = 2, scales = "free_y") +
   theme_bw()
 
 # Zipfs law
 
 freq_by_rank <- recognise_words %>%
-  group_by(Q33) %>%
+  group_by(recognise) %>%
   mutate(rank = row_number(),
          `term frequency` = n/total) %>%
   ungroup()
 
 freq_by_rank %>%
-  ggplot(aes(rank, `term frequency`, color = Q33)) +
+  ggplot(aes(rank, `term frequency`, color = recognise)) +
   geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) +
   scale_x_log10() +
   scale_y_log10() +
@@ -109,7 +148,7 @@ freq_by_rank %>%
 lm <- lm(log10(`term frequency`) ~ log10(rank), data = freq_by_rank)
 
 freq_by_rank %>%
-  ggplot(aes(rank, `term frequency`, color = Q33)) +
+  ggplot(aes(rank, `term frequency`, color = recognise)) +
   geom_abline(intercept = lm$coefficients[1], slope = lm$coefficients[2],
               color = "gray50", linetype = 2) +
   geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) +
@@ -119,7 +158,7 @@ freq_by_rank %>%
 
 # inverse document (person) frequency
 tf_idf <- recognise_words %>%
-  bind_tf_idf(word, Q33, n)
+  bind_tf_idf(word, recognise, n)
 
 tf_idf %>%
   select(-total) %>%
@@ -128,21 +167,23 @@ tf_idf %>%
 library(forcats)
 
 tf_idf %>%
-  group_by(Q33) %>%
+  group_by(recognise) %>%
   slice_max(tf_idf, n = 15) %>%
   ungroup() %>%
-  ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = Q33)) +
+  ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = recognise)) +
   geom_col(show.legend = FALSE) +
-  facet_wrap(~Q33, ncol = 2, scales = "free") +
+  facet_wrap(~recognise, ncol = 2, scales = "free") +
   labs(x = "tf-idf", y = NULL) +
   theme_bw()
 
 # Common bigrams
-SM_bigram_Q34 <- SM_dat %>%
-  select(ResponseId, Q33, Q34) %>%
-  separate(Q34, into = c("word1", "word2"), sep = " ")
+data_bigrams <- data %>%
+  select(ResponseId, book_exercise_name,
+         body_position, body_part, action, equipment, equipment_position, action_direction, misc,
+         recognise, response_name) %>%
+  separate(response_name, into = c("word1", "word2"), sep = " ")
 
-bigrams_filtered <- SM_bigram_Q34 %>%
+bigrams_filtered <- data_bigrams %>%
   filter(!word1 %in% stop_words$word) %>%
   filter(!word2 %in% stop_words$word)
 
