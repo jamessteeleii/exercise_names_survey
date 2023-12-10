@@ -11,13 +11,13 @@ read_prepare_data <- function(key) {
   files <- dir(data_path, pattern = "Exercise Names Survey*")
 
   # Map reading them to a tibble
-  data <- tibble(survey = files) %>%
+  data <- tibble(survey = files) |>
     mutate(file_contents = map(survey,
                                ~ read_csv(file.path(data_path, .)))
     )
 
   # Unnest and add survey name
-  data_useful <- unnest(data, cols = file_contents) %>%
+  data_useful <- unnest(data, cols = file_contents) |>
     mutate(survey = case_when(survey == files[1] ~ "NSCA",
                               survey == files[2] ~ "Social Media",
                               survey == files[3] ~ "Virtruvian")
@@ -36,17 +36,20 @@ read_prepare_data <- function(key) {
   data_long <- left_join(data_long, key, by="question")
 
   # Pivot question type (wording) wider so col for recognise and name
-  data_wide_response <- data_long %>%
+  data_wide_response <- data_long |>
     mutate(question_wording = case_when(
       question_wording == "What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below."
       ~ "response_name",
       question_wording == "Do you recognise this exercise?"
       ~ "recognise"
-    )) %>%
+    )) |>
     pivot_wider(id_cols = c(ResponseId,book_exercise_name),
                 names_from = question_wording,
                 values_from = response,
-                unused_fn = max)
+                unused_fn = max) |>
+
+    # Filter to only those who passed the attention check
+    filter(Q16 == "Green")
 }
 
 # Create tokens
@@ -54,12 +57,12 @@ convert_to_tokens <- function(data) {
   # Let's create tokens
   data("stop_words")
 
-  data_tokens <- data %>%
+  data_tokens <- data |>
     select(ResponseId, book_exercise_name,
            body_position, body_part, action, equipment, equipment_position, action_direction, misc,
-           recognise, response_name) %>%
-    unnest_tokens(word, response_name) %>%
-    anti_join(stop_words) %>%
+           recognise, response_name) |>
+    unnest_tokens(word, response_name) |>
+    anti_join(stop_words) |>
     filter(!is.na(word) & !is.na(recognise))
 
   # Spelling errors - https://books.psychstat.org/textmining/data.html

@@ -1,5 +1,7 @@
 library(tidyverse)
 library(tidytext)
+library(lspline)
+library(marginaleffects)
 
 # read in and prepare data
 key <- read_csv("data/Key.csv")
@@ -7,12 +9,12 @@ key <- read_csv("data/Key.csv")
 data_path <- "./data"
 files <- dir(data_path, pattern = "Exercise Names Survey*")
 
-data <- tibble(survey = files) %>%
+data <- tibble(survey = files) |>
   mutate(file_contents = map(survey,
                              ~ read_csv(file.path(data_path, .)))
   )
 
-data_useful <- unnest(data, cols = file_contents) %>%
+data_useful <- unnest(data, cols = file_contents) |>
   mutate(survey = case_when(survey == files[1] ~ "NSCA",
                             survey == files[2] ~ "Social Media",
                             survey == files[3] ~ "Virtruvian")
@@ -29,32 +31,35 @@ data_long <- pivot_longer(
 
 data_long <- left_join(data_long, key, by="question")
 
-data <- data_long %>%
+data <- data_long |>
   mutate(question_wording = case_when(
     question_wording == "What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below."
     ~ "response_name",
     question_wording == "Do you recognise this exercise?"
     ~ "recognise"
-  )) %>%
+  )) |>
   pivot_wider(id_cols = c(ResponseId,book_exercise_name),
               names_from = question_wording,
               values_from = response,
-              unused_fn = max)
+              unused_fn = max) |>
+  filter(Q16 == "Green",
+         Q5 == "Yes")
 
 
 # Let's create tokens
 data("stop_words")
 
-data_tokens <- data %>%
+data_tokens <- data |>
   select(ResponseId, book_exercise_name,
          body_position, body_part, action, equipment, equipment_position, action_direction, misc,
-         recognise, response_name) %>%
-  unnest_tokens(word, response_name) %>%
-  anti_join(stop_words) %>%
-  filter(!is.na(word) & !is.na(recognise))
+         recognise, response_name) |>
+  unnest_tokens(word, response_name) |>
+  anti_join(stop_words) |>
+  filter(!is.na(word) & !is.na(recognise)) %>%
+  mutate(recognise = factor(recognise, levels= c("YES", "NO")))
 
 # spelling errors - https://books.psychstat.org/textmining/data.html
-# library(hunspell)
+library(hunspell)
 words <- unique(data_tokens$word)
 bad_words <- hunspell(words)
 bad_words <- unique(unlist(bad_words))
@@ -63,32 +68,269 @@ suggest_words <- unlist(lapply(suggest_words, function(x) x[1]))
 
 ### Add checking the suggestions
 
-# library(stringi)
+library(stringi)
 
 bad.whole.words <- paste0("\\b", bad_words, "\\b")
 
 data_tokens$word_check <- stri_replace_all_regex(data_tokens$word, bad.whole.words, suggest_words,
                                             vectorize_all = FALSE)
 
-# Plot simple counts
-data_tokens %>%
-  count(word, sort = TRUE) %>%
-  # filter(n > 600) %>%
-  mutate(word = reorder(word, n)) %>%
-  ggplot(aes(n, word)) +
-  geom_col() +
-  labs(y = NULL) +
-  theme_classic()
+# # Plot simple counts
+# data_tokens |>
+#   count(word, sort = TRUE) |>
+#   filter(n > 600) |>
+#   mutate(word = reorder(word, n)) |>
+#   ggplot(aes(n, word)) +
+#   geom_col() +
+#   labs(y = NULL) +
+#   theme_classic()
+
+
+# tf based on recognition
+
+recognise_words <- data_tokens |>
+  count(recognise, word, sort = TRUE)
+
+total_words <- recognise_words |>
+  group_by(recognise) |>
+  summarize(total = sum(n))
+
+recognise_words <- left_join(recognise_words, total_words)
+
+ggplot(recognise_words, aes(n/total, fill = recognise)) +
+  geom_histogram(show.legend = FALSE) +
+  facet_wrap("recognise", scales = "free") +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_y_continuous(trans = scales::pseudo_log_trans()) +
+  theme_bw()
+
+ggsave("term_frequency_recognise.png", width = 10, height = 5, dpi = 300)
+
+# Zipfs law
+
+freq_by_rank <- recognise_words |>
+  group_by(recognise) |>
+  mutate(rank = row_number(),
+         tf = n/total,
+         log10_rank = log10(rank),
+         log10_tf = log10(tf)) |>
+  ungroup()
+
+lm <- lm(log10_tf ~ log10_rank * recognise, data = freq_by_rank)
+
+zipf_preds <- predictions(lm,
+                          variables = list(recognise = c("NO","YES")))
+
+freq_by_rank |>
+  ggplot() +
+  geom_line(aes(x=rank, y=tf, color = recognise),
+            size = 1.1, alpha = 0.8, show.legend = FALSE) +
+  geom_ribbon(data = zipf_preds,
+              aes(x=10^log10_rank, ymin=10^conf.low, ymax=10^conf.high,
+                  group = recognise),
+              alpha = 0.25) +
+  geom_line(data = zipf_preds,
+            aes(x=10^log10_rank, y=10^estimate, color = recognise),
+            linetype = "dashed") +
+
+  labs(x = "Term Frequency (proprtion on log10 scale)",
+       y = "Term Rank (log10 scale)",
+       color = "Recognised\nExercise?") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+
+
+# tf based on exercise (recognised)
+
+exercise_words <- data_tokens |>
+  filter(recognise == "YES") |>
+  count(book_exercise_name, word, sort = TRUE)
+
+total_words <- exercise_words |>
+  group_by(book_exercise_name) |>
+  summarize(total = sum(n))
+
+exercise_words <- left_join(exercise_words, total_words)
+
+ggplot(exercise_words, aes(n/total)) +
+  geom_histogram(show.legend = FALSE) +
+  facet_wrap("book_exercise_name", scales = "free") +
+  scale_y_continuous(trans = scales::pseudo_log_trans()) +
+  theme_bw()
+
+ggsave("term_frequency_exercise.png", width = 10, height = 5, dpi = 300)
+
+# Zipfs law
+
+freq_by_rank <- exercise_words |>
+  group_by(book_exercise_name) |>
+  mutate(rank = row_number(),
+         tf = n/total,
+         log10_rank = log10(rank),
+         log10_tf = log10(tf)) |>
+  ungroup()
+
+lm <- lm(log10_tf ~ log10_rank * book_exercise_name, data = freq_by_rank)
+
+zipf_preds <- predictions(lm,
+                          variables = list(book_exercise_name = unique(freq_by_rank$book_exercise_name)))
+
+freq_by_rank |>
+  ggplot() +
+  geom_line(aes(x=rank, y=tf),
+            size = 1.1, alpha = 0.8, show.legend = FALSE) +
+  geom_ribbon(data = zipf_preds,
+              aes(x=10^log10_rank, ymin=10^conf.low, ymax=10^conf.high),
+              alpha = 0.25) +
+  geom_line(data = zipf_preds,
+            aes(x=10^log10_rank, y=10^estimate),
+            linetype = "dashed") +
+  labs(x = "Term Frequency (proprtion on log10 scale)",
+       y = "Term Rank (log10 scale)") +
+  facet_wrap("book_exercise_name") +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+
+
+
+# tf based on exercise and recognition
+
+exercise_recognise_words <- data_tokens |>
+  count(book_exercise_name, recognise, word, sort = TRUE)
+
+total_words <- exercise_recognise_words |>
+  group_by(book_exercise_name, recognise) |>
+  summarize(total = sum(n))
+
+exercise_recognise_words <- left_join(exercise_recognise_words, total_words)
+
+ggplot(exercise_recognise_words, aes(n/total, fill = recognise)) +
+  geom_histogram(alpha=0.5) +
+  facet_wrap("book_exercise_name", scales = "free") +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_y_continuous(trans = scales::pseudo_log_trans()) +
+  labs(x = "Proportion of Total Words",
+       y = "Count (log10 scale)",
+       fill = "Recognised\nExercise?") +
+  theme_bw()
+
+ggsave("term_frequency_exercise.png", width = 10, height = 5, dpi = 300)
+
+# Zipfs law
+
+freq_by_rank <- exercise_recognise_words |>
+  group_by(book_exercise_name, recognise) |>
+  mutate(rank = row_number(),
+         tf = n/total,
+         log10_rank = log10(rank),
+         log10_tf = log10(tf)) |>
+  ungroup()
+
+lm <- lm(log10_tf ~ lspline(log10_rank, 1) * book_exercise_name * recognise, data = freq_by_rank)
+
+zipf_preds <- predictions(lm,
+                          variables = list(book_exercise_name = unique(freq_by_rank$book_exercise_name),
+                                           recognise = c("NO","YES")))
+
+freq_by_rank |>
+  ggplot() +
+  geom_line(aes(x=rank, y=tf, color = recognise),
+            size = 1.1, alpha = 0.8, show.legend = FALSE) +
+  geom_ribbon(data = zipf_preds,
+              aes(x=10^log10_rank, ymin=10^conf.low, ymax=10^conf.high,
+                  group = recognise),
+              alpha = 0.25) +
+  geom_line(data = zipf_preds,
+            aes(x=10^log10_rank, y=10^estimate, color = recognise),
+            linetype = "dashed") +
+  labs(x = "Term Frequency (proprtion on log10 scale)",
+       y = "Term Rank (log10 scale)",
+       color = "Recognised\nExercise?") +
+  facet_wrap("book_exercise_name") +
+  scale_color_brewer(palette = "Dark2") +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+
+
+
+
+
+
+
+# inverse exercise (person) frequency
+tf_ief <- exercise_words |>
+  bind_tf_idf(word, book_exercise_name, n)
+
+tf_ief |>
+  select(-total) |>
+  arrange(desc(tf_idf))
+
+library(forcats)
+
+check <- tf_ief |>
+  group_by(book_exercise_name) |>
+  slice_max(tf_idf, n = 10) |>
+  ungroup() |>
+  mutate(book_exercise_name = as.factor(book_exercise_name),
+         word = reorder_within(word, tf_idf, book_exercise_name)) |>
+  separate(word, into = c("word", "lab")) |>
+  ggplot(aes(word, tf_idf, group=book_exercise_name)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~book_exercise_name, scales = "free") +
+  labs(x = "tf-ief", y = NULL) +
+  coord_flip() +
+  scale_x_reordered() +
+  theme_bw()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # plot relationships between word use across categorical variable
 library(scales)
 
-data_tokens %>%
-  count(recognise, word) %>%
-  group_by(recognise) %>%
-  mutate(proportion = n / sum(n)) %>%
-  select(-n) %>%
-  pivot_wider(names_from = recognise, values_from = proportion) %>%
+data_tokens |>
+  count(recognise, word) |>
+  group_by(recognise) |>
+  mutate(proportion = n / sum(n)) |>
+  select(-n) |>
+  pivot_wider(names_from = recognise, values_from = proportion) |>
   ggplot(aes(x = NO, y = YES)) +
   geom_abline(color = "gray40", lty = 2) +
   geom_point(alpha = 0.1, size = 2.5) +
@@ -103,23 +345,23 @@ data_tokens %>%
 # A word cloud
 library(wordcloud)
 
-data_tokens %>%
-  count(word) %>%
+data_tokens |>
+  count(word) |>
   with(wordcloud(word, n, max.words = 100))
 
-data_tokens %>%
-  filter(!is.na(recognise)) %>%
-  count(word, recognise) %>%
-  reshape2::acast(word ~ recognise, value.var = "n", fill = 0) %>%
+data_tokens |>
+  filter(!is.na(recognise)) |>
+  count(word, recognise) |>
+  reshape2::acast(word ~ recognise, value.var = "n", fill = 0) |>
   comparison.cloud(colors = c("gray20", "gray80"),
                    max.words = 100)
 
 # What about using the term frequency?
-recognise_words <- data_tokens %>%
+recognise_words <- data_tokens |>
   count(recognise, word, sort = TRUE)
 
-total_words <- recognise_words %>%
-  group_by(recognise) %>%
+total_words <- recognise_words |>
+  group_by(recognise) |>
   summarize(total = sum(n))
 
 recognise_words <- left_join(recognise_words, total_words)
@@ -131,24 +373,24 @@ ggplot(recognise_words, aes(n/total, fill = recognise)) +
 
 # Zipfs law
 
-freq_by_rank <- recognise_words %>%
-  group_by(recognise) %>%
+freq_by_rank <- recognise_words |>
+  group_by(recognise) |>
   mutate(rank = row_number(),
-         `term frequency` = n/total) %>%
+         tf = n/total) |>
   ungroup()
 
-freq_by_rank %>%
-  ggplot(aes(rank, `term frequency`, color = recognise)) +
+freq_by_rank |>
+  ggplot(aes(rank, tf, color = recognise)) +
   geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) +
   scale_x_log10() +
   scale_y_log10() +
   theme_bw()
 
 # exponent of power law
-lm <- lm(log10(`term frequency`) ~ log10(rank), data = freq_by_rank)
+lm <- lm(log10(tf) ~ log10(rank), data = freq_by_rank)
 
-freq_by_rank %>%
-  ggplot(aes(rank, `term frequency`, color = recognise)) +
+freq_by_rank |>
+  ggplot(aes(rank, tf, color = recognise)) +
   geom_abline(intercept = lm$coefficients[1], slope = lm$coefficients[2],
               color = "gray50", linetype = 2) +
   geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) +
@@ -157,19 +399,19 @@ freq_by_rank %>%
   theme_bw()
 
 # inverse document (person) frequency
-tf_idf <- recognise_words %>%
+tf_idf <- recognise_words |>
   bind_tf_idf(word, recognise, n)
 
-tf_idf %>%
-  select(-total) %>%
+tf_idf |>
+  select(-total) |>
   arrange(desc(tf_idf))
 
 library(forcats)
 
-tf_idf %>%
-  group_by(recognise) %>%
-  slice_max(tf_idf, n = 15) %>%
-  ungroup() %>%
+tf_idf |>
+  group_by(recognise) |>
+  slice_max(tf_idf, n = 15) |>
+  ungroup() |>
   ggplot(aes(tf_idf, fct_reorder(word, tf_idf), fill = recognise)) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~recognise, ncol = 2, scales = "free") +
@@ -177,24 +419,24 @@ tf_idf %>%
   theme_bw()
 
 # Common bigrams
-data_bigrams <- data %>%
+data_bigrams <- data |>
   select(ResponseId, book_exercise_name,
          body_position, body_part, action, equipment, equipment_position, action_direction, misc,
-         recognise, response_name) %>%
+         recognise, response_name) |>
   separate(response_name, into = c("word1", "word2"), sep = " ")
 
-bigrams_filtered <- data_bigrams %>%
-  filter(!word1 %in% stop_words$word) %>%
+bigrams_filtered <- data_bigrams |>
+  filter(!word1 %in% stop_words$word) |>
   filter(!word2 %in% stop_words$word)
 
 # new bigram counts:
-bigram_counts <- bigrams_filtered %>%
+bigram_counts <- bigrams_filtered |>
   count(word1, word2, sort = TRUE)
 
 library(igraph)
 
-bigram_graph <- bigram_counts %>%
-  filter(n > 5) %>%
+bigram_graph <- bigram_counts |>
+  filter(n > 5) |>
   graph_from_data_frame()
 
 library(ggraph)
