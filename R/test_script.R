@@ -66,40 +66,112 @@ bad_words <- unique(unlist(bad_words))
 suggest_words <- hunspell_suggest(bad_words)
 suggest_words <- unlist(lapply(suggest_words, function(x) x[1]))
 
+
+    # # combine and compare suggestions (manually checked obvious errors)
+    #
+    bad_suggest_words <- bind_cols(bad_words, suggest_words)
+
+    count_words <- count(data_tokens, word)
+
+    bad_suggest_words <- inner_join(count_words, bad_suggest_words, by = c(word = "...1"))
+
+# Recode the incorrect suggestions manually with more than 2 uses
+# (manually editing original if obvious incorrect spelling)
+suggest_words <- recode(suggest_words,
+                        "flye" = "fly",
+                        "flue" = "fly",
+                        "flues" = "fly",
+                        "flyes" = "fly",
+                        "pend lay" = "pendlay",
+                        "probated" = "pronated",
+                        "DEC" = "deck",
+                        "insulated" = "supinated",
+                        "hop" = "ohp",
+                        "felt" = "delt",
+                        "pull downs" = "pull down",
+                        "antediluvian" = "vitruvian",
+                        "devoid" = "deltoid",
+                        "soles" = "soleus",
+                        "flex or" = "flexor",
+                        "trice" = "tricep",
+                        "pendent" = "pendlay",
+                        "resistivity" = "resistive",
+                        "kinetics" = "isokinetic",
+                        "fliers" = "fly",
+                        "font" = "dont",
+                        "selector" = "selectorized",
+                        "cal" = "calf",
+                        "dumbbells" = "dumbbell",
+                        "flatcar" = "flat bar",
+                        "gastronomic" = "gastrocnemius",
+                        "overboard" = "hoverboard",
+                        "playpen" = "pendlay",
+                        "pen delay" = "pendlay",
+                        "tr" = "trx",
+                        "virtual" = "vitruvian",
+                        "id" = "idk",
+                        "Maxine" = "machine",
+                        "precede" = "pec deck",
+                        "raid" = "raise",
+                        "pinnate" = "supinate",
+                        "trapezes" = "trapezius",
+                        "trapeziums" = "trapezius",
+                        "barb" = "barbell",
+                        "calf raises" = "calf raise",
+                        "chestfuls" = "chest fly",
+                        "extrasensory" = "extensor",
+                        "extensions" = "extension",
+                        "floors" = "flexor",
+                        "gluten" = "gluteal",
+                        "spelldown" = "lat pull down",
+                        "ply" = "Olympic",
+                        "peck" = "pec deck",
+                        "peddle" = "pendlay",
+                        "dependably" = "pendlay",
+                        "pen lay" = "pendlay",
+                        "preach" = "press",
+                        "detonated" = "pronated",
+                        "teases" = "seated",
+                        "selector" = "selectorized",
+                        "serrate" = "serratus",
+                        "ottoman" = "zottman"
+                        )
+
+
 ### Add checking the suggestions
 
 library(stringi)
 
-bad.whole.words <- paste0("\\b", bad_words, "\\b")
+bad_whole_words <- paste0("\\b", bad_words, "\\b")
 
-data_tokens$word_check <- stri_replace_all_regex(data_tokens$word, bad.whole.words, suggest_words,
+data_tokens$word <- stri_replace_all_regex(data_tokens$word, bad_whole_words, suggest_words,
                                             vectorize_all = FALSE)
 
-# # Plot simple counts
-# data_tokens |>
-#   count(word, sort = TRUE) |>
-#   filter(n > 600) |>
-#   mutate(word = reorder(word, n)) |>
-#   ggplot(aes(n, word)) +
-#   geom_col() +
-#   labs(y = NULL) +
-#   theme_classic()
+# for all double barrel terms split unnest again
+data_tokens <-  data_tokens |>
+  unnest_tokens(word, word)
+
+# Plot simple counts
+data_tokens |>
+  count(word, sort = TRUE) |>
+  filter(n > 600) |>
+  mutate(word = reorder(word, n)) |>
+  ggplot(aes(n, word)) +
+  geom_col() +
+  labs(y = NULL) +
+  theme_classic()
 
 
-# tf based on recognition
+# tf as proportion of all words based on recognition
 
 recognise_words <- data_tokens |>
-  count(recognise, word, sort = TRUE)
-
-total_words <- recognise_words |>
-  group_by(recognise) |>
-  summarize(total = sum(n))
-
-recognise_words <- left_join(recognise_words, total_words)
+  count(recognise, word, sort = TRUE) |>
+  ungroup() |>
+  mutate(total = sum(n))
 
 ggplot(recognise_words, aes(n/total, fill = recognise)) +
   geom_histogram(show.legend = FALSE) +
-  facet_wrap("recognise", scales = "free") +
+  facet_wrap("recognise") +
   scale_fill_brewer(palette = "Dark2") +
   scale_y_continuous(trans = scales::pseudo_log_trans()) +
   theme_bw()
@@ -116,7 +188,7 @@ freq_by_rank <- recognise_words |>
          log10_tf = log10(tf)) |>
   ungroup()
 
-lm <- lm(log10_tf ~ log10_rank * recognise, data = freq_by_rank)
+lm <- lm(log10_tf ~ lspline(log10_rank, 1) * recognise, data = freq_by_rank)
 
 zipf_preds <- predictions(lm,
                           variables = list(recognise = c("NO","YES")))
@@ -133,7 +205,7 @@ freq_by_rank |>
             aes(x=10^log10_rank, y=10^estimate, color = recognise),
             linetype = "dashed") +
 
-  labs(x = "Term Frequency (proprtion on log10 scale)",
+  labs(x = "Term Frequency (proportion on log10 scale)",
        y = "Term Rank (log10 scale)",
        color = "Recognised\nExercise?") +
   scale_color_brewer(palette = "Dark2") +
@@ -143,7 +215,7 @@ freq_by_rank |>
 
 
 
-# tf based on exercise (recognised)
+# tf as proportion of all words for exercise (only recognised words)
 
 exercise_words <- data_tokens |>
   filter(recognise == "YES") |>
@@ -173,7 +245,7 @@ freq_by_rank <- exercise_words |>
          log10_tf = log10(tf)) |>
   ungroup()
 
-lm <- lm(log10_tf ~ log10_rank * book_exercise_name, data = freq_by_rank)
+lm <- lm(log10_tf ~ lspline(log10_rank, 1) * book_exercise_name, data = freq_by_rank)
 
 zipf_preds <- predictions(lm,
                           variables = list(book_exercise_name = unique(freq_by_rank$book_exercise_name)))
@@ -188,7 +260,7 @@ freq_by_rank |>
   geom_line(data = zipf_preds,
             aes(x=10^log10_rank, y=10^estimate),
             linetype = "dashed") +
-  labs(x = "Term Frequency (proprtion on log10 scale)",
+  labs(x = "Term Frequency (proportion on log10 scale)",
        y = "Term Rank (log10 scale)") +
   facet_wrap("book_exercise_name") +
   scale_x_log10() +
@@ -197,14 +269,13 @@ freq_by_rank |>
 
 
 
-
-# tf based on exercise and recognition
+# tf as proportion of all words for exercise (both recognised and unrecognised words)
 
 exercise_recognise_words <- data_tokens |>
   count(book_exercise_name, recognise, word, sort = TRUE)
 
 total_words <- exercise_recognise_words |>
-  group_by(book_exercise_name, recognise) |>
+  group_by(book_exercise_name) |>
   summarize(total = sum(n))
 
 exercise_recognise_words <- left_join(exercise_recognise_words, total_words)
@@ -231,7 +302,7 @@ freq_by_rank <- exercise_recognise_words |>
          log10_tf = log10(tf)) |>
   ungroup()
 
-lm <- lm(log10_tf ~ lspline(log10_rank, 1) * book_exercise_name * recognise, data = freq_by_rank)
+lm <- lm(log10_tf ~ lspline(log10_rank, c(1)) * book_exercise_name * recognise, data = freq_by_rank)
 
 zipf_preds <- predictions(lm,
                           variables = list(book_exercise_name = unique(freq_by_rank$book_exercise_name),
@@ -248,7 +319,7 @@ freq_by_rank |>
   geom_line(data = zipf_preds,
             aes(x=10^log10_rank, y=10^estimate, color = recognise),
             linetype = "dashed") +
-  labs(x = "Term Frequency (proprtion on log10 scale)",
+  labs(x = "Term Frequency (proportion on log10 scale)",
        y = "Term Rank (log10 scale)",
        color = "Recognised\nExercise?") +
   facet_wrap("book_exercise_name") +
@@ -274,35 +345,26 @@ tf_ief |>
 
 library(forcats)
 
-check <- tf_ief |>
+tf_ief |>
   group_by(book_exercise_name) |>
-  slice_max(tf_idf, n = 10) |>
-  ungroup() |>
-  mutate(book_exercise_name = as.factor(book_exercise_name),
-         word = reorder_within(word, tf_idf, book_exercise_name)) |>
-  separate(word, into = c("word", "lab")) |>
-  ggplot(aes(word, tf_idf, group=book_exercise_name)) +
+  top_n(5) |>
+  # ungroup() |>
+  # mutate(book_exercise_name = as.factor(book_exercise_name),
+  #        word = reorder_within(word, tf_idf, book_exercise_name)) |>
+  # separate(word, into = c("word", "lab")) |>
+  ggplot(aes(x=tf_idf,
+             y=reorder_within(word, tf_idf, book_exercise_name))) +
   geom_col(show.legend = FALSE) +
+  labs(x = "Term Frequency - Inverse Exercise Frequency (tf-ief)", y = NULL) +
+  scale_y_reordered() +
   facet_wrap(~book_exercise_name, scales = "free") +
-  labs(x = "tf-ief", y = NULL) +
-  coord_flip() +
-  scale_x_reordered() +
   theme_bw()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+check <- tf_ief |>
+  group_by(book_exercise_name) |>
+  top_n(10)
 
 
 

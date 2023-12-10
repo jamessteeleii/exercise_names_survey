@@ -72,9 +72,43 @@ convert_to_tokens <- function(data) {
   suggest_words <- hunspell_suggest(bad_words)
   suggest_words <- unlist(lapply(suggest_words, function(x) x[1]))
 
-  # Add checking the suggestions
-  bad.whole.words <- paste0("\\b", bad_words, "\\b")
+        # # combine and compare suggestions (manually checked obvious errors)
+        #
+        # bad_suggest_words <- bind_cols(bad_words, suggest_words)
+        #
+        # count_words <- count(data_tokens, word)
+        #
+        # bad_suggest_words <- inner_join(count_words, bad_suggest_words, by = c(word = "...1"))
 
-  data_tokens$word_check <- stri_replace_all_regex(data_tokens$word, bad.whole.words, suggest_words,
+  # Recode the incorrect suggestions manually with more than 5 uses
+  # (manually editing original if incorrect spelling)
+  suggest_words <- recode(suggest_words,
+                          "flue" = "fly",
+                          "flyes" = "fly",
+                          "pend lay" = "pendlay",
+                          "probated" = "pronated",
+                          "DEC" = "deck",
+                          "hop" = "ohp",
+                          "felt" = "delt",
+                          "dead lift" = "deadlift",
+                          "pull downs" = "pull down",
+                          "antediluvian" = "vitruvian",
+                          "soles" = "soleus",
+                          "trice" = "tricep",
+                          "pendent" = "pendlay",
+                          "kinetics" = "isokinetic",
+                          "fliers" = "flyers",
+                          "font" = "dont",
+                          "selector" = "selectorized"
+  )
+
+
+  ### Add checking the suggestions
+
+  library(stringi)
+
+  bad_whole_words <- paste0("\\b", bad_words, "\\b")
+
+  data_tokens$word <- stri_replace_all_regex(data_tokens$word, bad_whole_words, suggest_words,
                                                    vectorize_all = FALSE)
 }
