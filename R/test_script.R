@@ -465,14 +465,9 @@ suggest_words1 <- recode(suggest_words1,
 
 bad_whole_words1 <- paste0("\\b", bad_words1, "\\b")
 
+
 data_bigrams$word1 <- stri_replace_all_regex(data_bigrams$word1, bad_whole_words1, suggest_words1,
                                            vectorize_all = FALSE)
-
-# for all double barrel terms split unnest again
-data_bigrams_word1 <-  data_bigrams |>
-  unnest_tokens(word1, word1)
-
-
 
 # spelling errors - https://books.psychstat.org/textmining/data.html
 words2 <- unique(data_bigrams$word2)
@@ -551,12 +546,7 @@ bad_whole_words2 <- paste0("\\b", bad_words2, "\\b")
 data_bigrams$word2 <- stri_replace_all_regex(data_bigrams$word2, bad_whole_words2, suggest_words2,
                                              vectorize_all = FALSE)
 
-# for all double barrel terms split unnest again
-data_bigrams_word2 <-  data_bigrams |>
-  unnest_tokens(word2, word2)
-
-
-data_bigrams <- left_join(data_bigrams_word1, data_bigrams_word2) |>
+data_bigrams <- data_bigrams |>
   unite(response_name, c("word1","word2"), sep = " ") |>
   unnest_tokens(bigram, response_name, token = "ngrams", n =2) |>
   separate(bigram, into = c("word1", "word2"), sep = " ") |>
@@ -564,13 +554,11 @@ data_bigrams <- left_join(data_bigrams_word1, data_bigrams_word2) |>
   filter(!word2 %in% stop_words$word) |>
   mutate(word1 = na_if(word1, "na"),
          word2 = na_if(word2, "na")) |>
-    # filter(!is.na(word1)) |>
-    # filter(!is.na(word2)) |>
+    filter(!is.na(word1)) |>
+    filter(!is.na(word2)) |>
     rowwise() |>
     mutate(word1 = SemNetCleaner::singularize(word1, dictionary = TRUE),
            word2 = SemNetCleaner::singularize(word2, dictionary = TRUE))
-
-  remove(data_bigrams_word1, data_bigrams_word2)
 
   # for some reason it changes "press" to "pres" and "raises" to "rais" so we change back
   data_bigrams$word1 <- recode(data_bigrams$word1,
@@ -597,16 +585,20 @@ for(i in exercises) {
 
   set.seed(2020)
 
-  a <- grid::arrow(angle = 50, type = "closed", length = unit(.1, "inches"))
+  a <- grid::arrow(length = unit(.1, "inches"))
 
-  bigram_plot <- ggraph(bigram_counts, layout = "stress") +
-    geom_edge_arc(aes(edge_alpha = n), show.legend = FALSE,
-                   arrow = a, end_cap = circle(.25, 'inches'), check_overlap=TRUE) +
+  bigram_plot <- ggraph(bigram_counts, layout = 'grid') +
+    geom_edge_arc(aes(edge_alpha = n,
+                      start_cap = label_rect(node1.name),
+                      end_cap = label_rect(node2.name)),
+                  show.legend = FALSE,
+                  arrow = arrow(angle = 20, length = unit(2, 'mm')))  +
     geom_node_point(color = NA, size = 10) +
-    geom_node_label(aes(label = name), size = 3) +
+    geom_node_label(aes(label = name), size = 2.5, label.padding = unit(0.1, "lines")) +
     labs(title = paste(i)) +
     theme_graph() +
-    theme(plot.title = element_text(size = 10))
+    theme(plot.title = element_text(size = 10),
+          panel.border = element_rect(colour = "black", fill=NA))
 
   bigram_plots[[i]] <- bigram_plot
 
