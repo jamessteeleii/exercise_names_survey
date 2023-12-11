@@ -2,6 +2,12 @@ library(tidyverse)
 library(tidytext)
 library(lspline)
 library(marginaleffects)
+library(forcats)
+library(igraph)
+library(ggraph)
+library(tidygraph)
+library(patchwork)
+
 
 # read in and prepare data
 key <- read_csv("data/Key.csv")
@@ -14,24 +20,20 @@ data <- tibble(survey = files) |>
                              ~ read_csv(file.path(data_path, .)))
   )
 
-data_useful <- unnest(data, cols = file_contents) |>
+data <- unnest(data, cols = file_contents) |>
   mutate(survey = case_when(survey == files[1] ~ "NSCA",
                             survey == files[2] ~ "Social Media",
                             survey == files[3] ~ "Virtruvian")
-         )
-
-
-data_long <- pivot_longer(
-  data = data_useful,
+         ) |>
+  pivot_longer(
   cols = c(24:65,67:74),
   names_to = "question",
   values_to = "response"
-
 )
 
-data_long <- left_join(data_long, key, by="question")
+data <- left_join(data, key, by="question")
 
-data <- data_long |>
+data <- data |>
   mutate(question_wording = case_when(
     question_wording == "What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below."
     ~ "response_name",
@@ -149,7 +151,21 @@ data_tokens$word <- stri_replace_all_regex(data_tokens$word, bad_whole_words, su
 
 # for all double barrel terms split unnest again
 data_tokens <-  data_tokens |>
-  unnest_tokens(word, word)
+  unnest_tokens(word, word) |>
+  filter(!is.na(word)) |>
+  # filter(!row_number() %in% 34680) |>
+  # slice_head(n=34680) |>
+  rowwise() |>
+  mutate(word = SemNetCleaner::singularize(word, dictionary = TRUE))
+
+  # for some reason it changes "press" to "pres" so we change back
+data_tokens$word <- recode(data_tokens$word,
+                           "pres" = "press")
+
+
+
+
+
 
 # Plot simple counts
 data_tokens |>
@@ -330,20 +346,13 @@ freq_by_rank |>
 
 
 
-
-
-
-
-
-# inverse exercise (person) frequency
+# inverse exercise frequency for recognised exercises
 tf_ief <- exercise_words |>
   bind_tf_idf(word, book_exercise_name, n)
 
 tf_ief |>
   select(-total) |>
   arrange(desc(tf_idf))
-
-library(forcats)
 
 tf_ief |>
   group_by(book_exercise_name) |>
@@ -368,18 +377,6 @@ tf_ief |>
 
 
 
-data_tokens <- data |>
-  select(ResponseId, book_exercise_name,
-         body_position, body_part, action, equipment, equipment_position, action_direction, misc,
-         recognise, response_name) |>
-  unnest_tokens(word, response_name) |>
-  anti_join(stop_words) |>
-  filter(!is.na(word) & !is.na(recognise)) %>%
-  mutate(recognise = factor(recognise, levels= c("YES", "NO")))
-
-
-
-
 # Common bigrams
 data_bigrams <- data |>
   select(ResponseId, book_exercise_name,
@@ -389,234 +386,262 @@ data_bigrams <- data |>
   separate(bigram, into = c("word1", "word2"), sep = " ") |>
   filter(!word1 %in% stop_words$word) |>
   filter(!word2 %in% stop_words$word) |>
-  filter(!is.na(word1))
+  filter(!is.na(word1)) |>
+  filter(!is.na(word2)) |>
+  rowid_to_column()
 
-# # spelling errors - https://books.psychstat.org/textmining/data.html
-# words1 <- unique(data_bigrams$word1)
-# bad_words1 <- hunspell(words1)
-# bad_words1 <- unique(unlist(bad_words1))
-# suggest_words1 <- hunspell_suggest(bad_words1)
-# suggest_words1 <- unlist(lapply(suggest_words1, function(x) x[1]))
-#
-#
-# # # combine and compare suggestions (manually checked obvious errors)
-# #
-# bad_suggest_words1 <- bind_cols(bad_words1, suggest_words1)
-#
-# count_words1 <- count(data_bigrams, word1)
-#
-# bad_suggest_words1 <- inner_join(count_words1, bad_suggest_words1, by = c(word1 = "...1"))
-#
-# # Recode the incorrect suggestions manually with more than 2 uses
-# # (manually editing original if obvious incorrect spelling)
-# suggest_words1 <- recode(suggest_words1,
-#                         "flye" = "fly",
-#                         "flue" = "fly",
-#                         "flues" = "fly",
-#                         "flyes" = "fly",
-#                         "pend lay" = "pendlay",
-#                         "probated" = "pronated",
-#                         "DEC" = "deck",
-#                         "insulated" = "supinated",
-#                         "hop" = "ohp",
-#                         "felt" = "delt",
-#                         "pull downs" = "pull down",
-#                         "antediluvian" = "vitruvian",
-#                         "devoid" = "deltoid",
-#                         "soles" = "soleus",
-#                         "flex or" = "flexor",
-#                         "trice" = "tricep",
-#                         "pendent" = "pendlay",
-#                         "resistivity" = "resistive",
-#                         "kinetics" = "isokinetic",
-#                         "fliers" = "fly",
-#                         "font" = "dont",
-#                         "selector" = "selectorized",
-#                         "cal" = "calf",
-#                         "dumbbells" = "dumbbell",
-#                         "flatcar" = "flat bar",
-#                         "gastronomic" = "gastrocnemius",
-#                         "overboard" = "hoverboard",
-#                         "playpen" = "pendlay",
-#                         "pen delay" = "pendlay",
-#                         "tr" = "trx",
-#                         "virtual" = "vitruvian",
-#                         "id" = "idk",
-#                         "Maxine" = "machine",
-#                         "precede" = "pec deck",
-#                         "raid" = "raise",
-#                         "pinnate" = "supinate",
-#                         "trapezes" = "trapezius",
-#                         "trapeziums" = "trapezius",
-#                         "barb" = "barbell",
-#                         "calf raises" = "calf raise",
-#                         "chestfuls" = "chest fly",
-#                         "extrasensory" = "extensor",
-#                         "extensions" = "extension",
-#                         "floors" = "flexor",
-#                         "gluten" = "gluteal",
-#                         "spelldown" = "lat pull down",
-#                         "ply" = "Olympic",
-#                         "peck" = "pec deck",
-#                         "peddle" = "pendlay",
-#                         "dependably" = "pendlay",
-#                         "pen lay" = "pendlay",
-#                         "preach" = "press",
-#                         "detonated" = "pronated",
-#                         "teases" = "seated",
-#                         "selector" = "selectorized",
-#                         "serrate" = "serratus",
-#                         "ottoman" = "zottman"
-# )
-#
-#
-# ### Add checking the suggestions
-#
-# bad_whole_words1 <- paste0("\\b", bad_words1, "\\b")
-#
-# data_bigrams$word1 <- stri_replace_all_regex(data_bigrams$word1, bad_whole_words1, suggest_words1,
-#                                            vectorize_all = FALSE)
-#
-# # for all double barrel terms split unnest again
-# data_bigrams_word1 <-  data_bigrams |>
-#   unnest_tokens(word1, word1)
-#
-#
-#
-# # spelling errors - https://books.psychstat.org/textmining/data.html
-# words2 <- unique(data_bigrams$word2)
-# bad_words2 <- hunspell(words2)
-# bad_words2 <- unique(unlist(bad_words2))
-# suggest_words2 <- hunspell_suggest(bad_words2)
-# suggest_words2 <- unlist(lapply(suggest_words2, function(x) x[1]))
-#
-#
-# # # combine and compare suggestions (manually checked obvious errors)
-# #
-# bad_suggest_words2 <- bind_cols(bad_words2, suggest_words2)
-#
-# count_words2 <- count(data_bigrams, word2)
-#
-# bad_suggest_words2 <- inner_join(count_words2, bad_suggest_words2, by = c(word2 = "...1"))
-#
-# # Recode the incorrect suggestions manually with more than 2 uses
-# # (manually editing original if obvious incorrect spelling)
-# suggest_words2 <- recode(suggest_words2,
-#                          "flye" = "fly",
-#                          "flue" = "fly",
-#                          "flues" = "fly",
-#                          "flyes" = "fly",
-#                          "pend lay" = "pendlay",
-#                          "probated" = "pronated",
-#                          "DEC" = "deck",
-#                          "insulated" = "supinated",
-#                          "hop" = "ohp",
-#                          "felt" = "delt",
-#                          "pull downs" = "pull down",
-#                          "antediluvian" = "vitruvian",
-#                          "devoid" = "deltoid",
-#                          "soles" = "soleus",
-#                          "flex or" = "flexor",
-#                          "trice" = "tricep",
-#                          "pendent" = "pendlay",
-#                          "resistivity" = "resistive",
-#                          "kinetics" = "isokinetic",
-#                          "fliers" = "fly",
-#                          "font" = "dont",
-#                          "selector" = "selectorized",
-#                          "cal" = "calf",
-#                          "dumbbells" = "dumbbell",
-#                          "flatcar" = "flat bar",
-#                          "gastronomic" = "gastrocnemius",
-#                          "overboard" = "hoverboard",
-#                          "playpen" = "pendlay",
-#                          "pen delay" = "pendlay",
-#                          "tr" = "trx",
-#                          "virtual" = "vitruvian",
-#                          "id" = "idk",
-#                          "Maxine" = "machine",
-#                          "precede" = "pec deck",
-#                          "raid" = "raise",
-#                          "pinnate" = "supinate",
-#                          "trapezes" = "trapezius",
-#                          "trapeziums" = "trapezius",
-#                          "barb" = "barbell",
-#                          "calf raises" = "calf raise",
-#                          "chestfuls" = "chest fly",
-#                          "extrasensory" = "extensor",
-#                          "extensions" = "extension",
-#                          "floors" = "flexor",
-#                          "gluten" = "gluteal",
-#                          "spelldown" = "lat pull down",
-#                          "ply" = "Olympic",
-#                          "peck" = "pec deck",
-#                          "peddle" = "pendlay",
-#                          "dependably" = "pendlay",
-#                          "pen lay" = "pendlay",
-#                          "preach" = "press",
-#                          "detonated" = "pronated",
-#                          "teases" = "seated",
-#                          "selector" = "selectorized",
-#                          "serrate" = "serratus",
-#                          "ottoman" = "zottman"
-# )
-#
-#
-# ### Add checking the suggestions
-#
-# bad_whole_words2 <- paste0("\\b", bad_words2, "\\b")
-#
-# data_bigrams$word2 <- stri_replace_all_regex(data_bigrams$word2, bad_whole_words2, suggest_words2,
-#                                              vectorize_all = FALSE)
-#
-# # for all double barrel terms split unnest again
-# data_bigrams_word2 <-  data_bigrams |>
-#   unnest_tokens(word2, word2)
+# spelling errors - https://books.psychstat.org/textmining/data.html
+words1 <- unique(data_bigrams$word1)
+bad_words1 <- hunspell(words1)
+bad_words1 <- unique(unlist(bad_words1))
+suggest_words1 <- hunspell_suggest(bad_words1)
+suggest_words1 <- unlist(lapply(suggest_words1, function(x) x[1]))
+
+# Recode the incorrect suggestions manually with more than 2 uses
+# (manually editing original if obvious incorrect spelling)
+suggest_words1 <- recode(suggest_words1,
+                        "flye" = "fly",
+                        "flue" = "fly",
+                        "flues" = "fly",
+                        "flyes" = "fly",
+                        "pend lay" = "pendlay",
+                        "probated" = "pronated",
+                        "DEC" = "deck",
+                        "insulated" = "supinated",
+                        "hop" = "ohp",
+                        "felt" = "delt",
+                        "pull downs" = "pull down",
+                        "antediluvian" = "vitruvian",
+                        "devoid" = "deltoid",
+                        "soles" = "soleus",
+                        "flex or" = "flexor",
+                        "trice" = "tricep",
+                        "pendent" = "pendlay",
+                        "resistivity" = "resistive",
+                        "kinetics" = "isokinetic",
+                        "fliers" = "fly",
+                        "font" = "dont",
+                        "selector" = "selectorized",
+                        "cal" = "calf",
+                        "dumbbells" = "dumbbell",
+                        "flatcar" = "flat bar",
+                        "gastronomic" = "gastrocnemius",
+                        "overboard" = "hoverboard",
+                        "playpen" = "pendlay",
+                        "pen delay" = "pendlay",
+                        "tr" = "trx",
+                        "virtual" = "vitruvian",
+                        "id" = "idk",
+                        "Maxine" = "machine",
+                        "precede" = "pec deck",
+                        "raid" = "raise",
+                        "pinnate" = "supinate",
+                        "trapezes" = "trapezius",
+                        "trapeziums" = "trapezius",
+                        "barb" = "barbell",
+                        "calf raises" = "calf raise",
+                        "chestfuls" = "chest fly",
+                        "extrasensory" = "extensor",
+                        "extensions" = "extension",
+                        "floors" = "flexor",
+                        "gluten" = "gluteal",
+                        "spelldown" = "lat pull down",
+                        "ply" = "Olympic",
+                        "peck" = "pec deck",
+                        "peddle" = "pendlay",
+                        "dependably" = "pendlay",
+                        "pen lay" = "pendlay",
+                        "preach" = "press",
+                        "detonated" = "pronated",
+                        "teases" = "seated",
+                        "selector" = "selectorized",
+                        "serrate" = "serratus",
+                        "ottoman" = "zottman"
+)
+
+
+### Add checking the suggestions
+
+bad_whole_words1 <- paste0("\\b", bad_words1, "\\b")
+
+data_bigrams$word1 <- stri_replace_all_regex(data_bigrams$word1, bad_whole_words1, suggest_words1,
+                                           vectorize_all = FALSE)
+
+# for all double barrel terms split unnest again
+data_bigrams_word1 <-  data_bigrams |>
+  unnest_tokens(word1, word1)
 
 
 
+# spelling errors - https://books.psychstat.org/textmining/data.html
+words2 <- unique(data_bigrams$word2)
+bad_words2 <- hunspell(words2)
+bad_words2 <- unique(unlist(bad_words2))
+suggest_words2 <- hunspell_suggest(bad_words2)
+suggest_words2 <- unlist(lapply(suggest_words2, function(x) x[1]))
+
+# Recode the incorrect suggestions manually with more than 2 uses
+# (manually editing original if obvious incorrect spelling)
+suggest_words2 <- recode(suggest_words2,
+                         "flye" = "fly",
+                         "flue" = "fly",
+                         "flues" = "fly",
+                         "flyes" = "fly",
+                         "pend lay" = "pendlay",
+                         "probated" = "pronated",
+                         "DEC" = "deck",
+                         "insulated" = "supinated",
+                         "hop" = "ohp",
+                         "felt" = "delt",
+                         "pull downs" = "pull down",
+                         "antediluvian" = "vitruvian",
+                         "devoid" = "deltoid",
+                         "soles" = "soleus",
+                         "flex or" = "flexor",
+                         "trice" = "tricep",
+                         "pendent" = "pendlay",
+                         "resistivity" = "resistive",
+                         "kinetics" = "isokinetic",
+                         "fliers" = "fly",
+                         "font" = "dont",
+                         "selector" = "selectorized",
+                         "cal" = "calf",
+                         "dumbbells" = "dumbbell",
+                         "flatcar" = "flat bar",
+                         "gastronomic" = "gastrocnemius",
+                         "overboard" = "hoverboard",
+                         "playpen" = "pendlay",
+                         "pen delay" = "pendlay",
+                         "tr" = "trx",
+                         "virtual" = "vitruvian",
+                         "id" = "idk",
+                         "Maxine" = "machine",
+                         "precede" = "pec deck",
+                         "raid" = "raise",
+                         "pinnate" = "supinate",
+                         "trapezes" = "trapezius",
+                         "trapeziums" = "trapezius",
+                         "barb" = "barbell",
+                         "calf raises" = "calf raise",
+                         "chestfuls" = "chest fly",
+                         "extrasensory" = "extensor",
+                         "extensions" = "extension",
+                         "floors" = "flexor",
+                         "gluten" = "gluteal",
+                         "spelldown" = "lat pull down",
+                         "ply" = "Olympic",
+                         "peck" = "pec deck",
+                         "peddle" = "pendlay",
+                         "dependably" = "pendlay",
+                         "pen lay" = "pendlay",
+                         "preach" = "press",
+                         "detonated" = "pronated",
+                         "teases" = "seated",
+                         "selector" = "selectorized",
+                         "serrate" = "serratus",
+                         "ottoman" = "zottman"
+)
 
 
+### Add checking the suggestions
+
+bad_whole_words2 <- paste0("\\b", bad_words2, "\\b")
+
+data_bigrams$word2 <- stri_replace_all_regex(data_bigrams$word2, bad_whole_words2, suggest_words2,
+                                             vectorize_all = FALSE)
+
+# for all double barrel terms split unnest again
+data_bigrams_word2 <-  data_bigrams |>
+  unnest_tokens(word2, word2)
 
 
+data_bigrams <- left_join(data_bigrams_word1, data_bigrams_word2) %>%
+  unite(response_name, c("word1","word2"), sep = " ") |>
+  unnest_tokens(bigram, response_name, token = "ngrams", n =2) |>
+  separate(bigram, into = c("word1", "word2"), sep = " ") |>
+  filter(!word1 %in% stop_words$word) |>
+  filter(!word2 %in% stop_words$word) |>
+  mutate(word1 = na_if(word1, "na"),
+         word2 = na_if(word2, "na")) |>
+    # filter(!is.na(word1)) |>
+    # filter(!is.na(word2)) |>
+    rowwise() |>
+    mutate(word1 = SemNetCleaner::singularize(word1, dictionary = TRUE),
+           word2 = SemNetCleaner::singularize(word2, dictionary = TRUE))
 
-library(tidygraph)
+  remove(data_bigrams_word1, data_bigrams_word2)
 
-highschool
+  # for some reason it changes "press" to "pres" so we change back
+  data_bigrams$word1 <- recode(data_bigrams$word1,
+                             "pres" = "press")
+  data_bigrams$word2 <- recode(data_bigrams$word2,
+                               "pres" = "press")
 
 
-as_tbl_graph(highschool)
+# bigram plots
 
-# new bigram counts:
-bigram_counts <- data_bigrams |>
-  group_by(book_exercise_name) |>
-  count(word1, word2, sort = TRUE)
+exercises <- sort(unique(data_tokens$book_exercise_name))
 
-library(igraph)
+bigram_plots <- list()
 
-bigram_graph <- bigram_counts |>
-  filter(n > 5) |>
-  as_tbl_graph()
+for(i in exercises) {
+  bigram_counts <- data_bigrams |>
+    filter(book_exercise_name == i) |>
+    count(word1, word2, sort = TRUE) |>
+    select(word1, word2, n) |>
+    filter(n > 5) |>
+    as_tbl_graph()
 
-library(ggraph)
-set.seed(2017)
+  set.seed(2020)
 
-ggraph(bigram_graph, layout = "fr") +
-  geom_edge_link() +
-  geom_node_point() +
-  geom_node_text(aes(label = name), vjust = 1, hjust = 1)
+  a <- grid::arrow(angle = 50, type = "closed", length = unit(.1, "inches"))
 
-set.seed(2020)
+  bigram_plot <- ggraph(bigram_counts, layout = "stress") +
+    geom_edge_arc(aes(edge_alpha = n), show.legend = FALSE,
+                   arrow = a, end_cap = circle(.25, 'inches'), check_overlap=TRUE) +
+    geom_node_point(color = NA, size = 10) +
+    geom_node_label(aes(label = name), size = 3) +
+    labs(title = paste(i)) +
+    theme_graph() +
+    theme(plot.title = element_text(size = 10))
 
-a <- grid::arrow(type = "closed", length = unit(.15, "inches"))
+  bigram_plots[[i]] <- bigram_plot
 
-ggraph(bigram_graph, layout = "fr") +
-  geom_edge_link(aes(edge_alpha = n+100), show.legend = FALSE,
-                 arrow = a, end_cap = circle(.07, 'inches')) +
-  geom_node_point(color = "lightblue", size = 5) +
-  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
-  facet_graph(name) +
-  theme_graph()
+}
+
+print(bigram_plots$`back squat`)
+
+
+(
+  bigram_plots$`back squat` +
+  bigram_plots$`barbell biceps curl` +
+  bigram_plots$`bent-over row` +
+  bigram_plots$`flat barbell bench press` +
+  bigram_plots$`flat dumbbell fly` +
+  bigram_plots$`hammer curl` +
+  bigram_plots$`hip sled (machine)` +
+  bigram_plots$`incline dumbbell bench press` +
+  bigram_plots$`lat pulldown (machine)` +
+  bigram_plots$`lateral shoulder raise` +
+  bigram_plots$`leg (knee) extension (machine)` +
+  bigram_plots$`one-arm dumbbell row` +
+  bigram_plots$`pec deck (machine)` +
+  bigram_plots$`seated barbell shoulder press` +
+  bigram_plots$`seated calf (heel) raise (machine)` +
+  bigram_plots$`seated row (machine)` +
+  bigram_plots$`shoulder press (machine)` +
+  bigram_plots$`standing calf (heel) raise (machine)` +
+  bigram_plots$`upright row` +
+  bigram_plots$`vertical chest press (machine)` +
+  bigram_plots$`virtruvian back squat with bar` +
+  bigram_plots$`virtruvian bench press with bar` +
+  bigram_plots$`virtruvian bent-over row with bar` +
+  bigram_plots$`virtruvian biceps curl with bar` +
+  bigram_plots$`wrist curl`
+)
+
+ggsave("bigram_plots.png", width = 30, height = 15, dpi = 600)
+
 
 # Things we can do
 # Simply look at the most common names by exercise
