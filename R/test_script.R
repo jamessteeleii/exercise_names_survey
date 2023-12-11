@@ -1,5 +1,6 @@
 library(tidyverse)
 library(tidytext)
+library(stringi)
 library(lspline)
 library(marginaleffects)
 library(forcats)
@@ -57,7 +58,7 @@ data_tokens <- data |>
          recognise, response_name) |>
   unnest_tokens(word, response_name) |>
   anti_join(stop_words) |>
-  filter(!is.na(word) & !is.na(recognise)) %>%
+  filter(!is.na(word) & !is.na(recognise)) |>
   mutate(recognise = factor(recognise, levels= c("YES", "NO")))
 
 # spelling errors - https://books.psychstat.org/textmining/data.html
@@ -142,8 +143,6 @@ suggest_words <- recode(suggest_words,
 
 ### Add checking the suggestions
 
-library(stringi)
-
 bad_whole_words <- paste0("\\b", bad_words, "\\b")
 
 data_tokens$word <- stri_replace_all_regex(data_tokens$word, bad_whole_words, suggest_words,
@@ -158,9 +157,10 @@ data_tokens <-  data_tokens |>
   rowwise() |>
   mutate(word = SemNetCleaner::singularize(word, dictionary = TRUE))
 
-  # for some reason it changes "press" to "pres" so we change back
-data_tokens$word <- recode(data_tokens$word,
-                           "pres" = "press")
+  # for some reason it changes "press" to "pres" and "raises" to "rais" so we change back
+  data_tokens$word <- recode(data_tokens$word,
+                           "pres" = "press",
+                           "rais" = "raise")
 
 
 
@@ -367,6 +367,7 @@ tf_ief |>
 
 
 
+ggsave("tf_ief.png", width = 20, height = 10, dpi = 600)
 
 
 
@@ -555,7 +556,7 @@ data_bigrams_word2 <-  data_bigrams |>
   unnest_tokens(word2, word2)
 
 
-data_bigrams <- left_join(data_bigrams_word1, data_bigrams_word2) %>%
+data_bigrams <- left_join(data_bigrams_word1, data_bigrams_word2) |>
   unite(response_name, c("word1","word2"), sep = " ") |>
   unnest_tokens(bigram, response_name, token = "ngrams", n =2) |>
   separate(bigram, into = c("word1", "word2"), sep = " ") |>
@@ -571,11 +572,13 @@ data_bigrams <- left_join(data_bigrams_word1, data_bigrams_word2) %>%
 
   remove(data_bigrams_word1, data_bigrams_word2)
 
-  # for some reason it changes "press" to "pres" so we change back
+  # for some reason it changes "press" to "pres" and "raises" to "rais" so we change back
   data_bigrams$word1 <- recode(data_bigrams$word1,
-                             "pres" = "press")
+                             "pres" = "press",
+                             "rais" = "raise")
   data_bigrams$word2 <- recode(data_bigrams$word2,
-                               "pres" = "press")
+                               "pres" = "press",
+                               "rais" = "raise")
 
 
 # bigram plots
@@ -609,7 +612,7 @@ for(i in exercises) {
 
 }
 
-print(bigram_plots$`back squat`)
+bigram_plots$`back squat`
 
 
 (
@@ -640,8 +643,40 @@ print(bigram_plots$`back squat`)
   bigram_plots$`wrist curl`
 )
 
-ggsave("bigram_plots.png", width = 30, height = 15, dpi = 600)
+ggsave("bigram_plots.png", width = 30, height = 20, dpi = 600)
 
+
+
+
+
+# Topic modelling
+
+# cast to dfm
+
+library(Matrix)
+
+data_dfm <- exercise_words |>
+  select(-total) |>
+  cast_dtm(book_exercise_name, word, n)
+
+
+exercise_lda <- topicmodels::LDA(data_dfm, k=3, control = list(seed = 1234))
+
+tidy_exercise_lda <- tidy(exercise_lda)
+
+exercise_top_terms <- tidy_exercise_lda |>
+  group_by(topic) |>
+  slice_max(beta, n = 10) |>
+  ungroup() |>
+  arrange(topic, -beta)
+
+exercise_top_terms |>
+  mutate(term = reorder_within(term, beta, topic)) |>
+  ggplot(aes(beta, term, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_y_reordered()
 
 # Things we can do
 # Simply look at the most common names by exercise
