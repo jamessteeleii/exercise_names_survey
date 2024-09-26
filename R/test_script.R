@@ -14,39 +14,56 @@ library(patchwork)
 # read in and prepare data
 key <- read_csv("data/Key.csv")
 
+# Get file path and names
 data_path <- "./data"
 files <- dir(data_path, pattern = "Exercise Names Survey*")
 
+# Map reading them to a tibble
 data <- tibble(survey = files) |>
   mutate(file_contents = map(survey,
-                             ~ read_csv(file.path(data_path, .)))
+                             ~ read_csv(file.path(data_path, .))))
+
+# Unnest and add survey name
+data <- unnest(data, cols = file_contents) |>
+  mutate(
+    survey = case_when(
+      survey == files[1] ~ "NSCA",
+      survey == files[2] ~ "Social Media",
+      survey == files[3] ~ "Vitruvian"
+    )
+  ) |>
+
+  # Pivot longer so responses for both question types (recognise, name) are tidy
+  pivot_longer(
+    cols = c(23:64, 66:73),
+    names_to = "question",
+    values_to = "response"
   )
 
-data <- unnest(data, cols = file_contents) |>
-  mutate(survey = case_when(survey == files[1] ~ "NSCA",
-                            survey == files[2] ~ "Social Media",
-                            survey == files[3] ~ "Vitruvian")
-         ) |>
-  pivot_longer(
-  cols = c(24:65,67:74),
-  names_to = "question",
-  values_to = "response"
-)
+# Join with survey key
+data <- left_join(data, key, by = "question")
 
-data <- left_join(data, key, by="question")
-
+# Pivot question type (wording) wider so col for recognise and name
 data <- data |>
-  mutate(question_wording = case_when(
-    question_wording == "What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below."
-    ~ "response_name",
-    question_wording == "Do you recognise this exercise?"
-    ~ "recognise"
-  )) |>
-  pivot_wider(id_cols = c(ResponseId,book_exercise_name),
-              names_from = question_wording,
-              values_from = response,
-              unused_fn = max) |>
+  mutate(
+    question_wording = case_when(
+      question_wording == "What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below."
+      ~ "response_name",
+      question_wording == "Do you recognise this exercise?"
+      ~ "recognise"
+    )
+  ) |>
+  pivot_wider(
+    id_cols = c(ResponseId, book_exercise_name),
+    names_from = question_wording,
+    values_from = response,
+    unused_fn = max
+  ) |>
+
+  # Filter to only those who passed the attention check
   filter(Q16 == "Green",
+
+         # And for English is their primary language for discussing exercise
          Q5 == "Yes")
 
 
@@ -828,3 +845,159 @@ data_tokens <-  data_tokens |>
 
 # https://bookdown.org/daniel_dauber_io/r4np_book/mixed-methods-research.html
 # https://martinctc.github.io/blog/a-short-r-package-review-rqda/
+
+
+
+
+
+  bi_uni_words <- tokens |>
+    filter(recognise == "YES") |>
+    count(misc, word, sort = TRUE)
+
+  # inverse exercise frequency for recognised exercises
+  tf_ibuf <- bi_uni_words |>
+    filter(!is.na(misc)) |>
+    bind_tf_idf(word, misc, n)
+
+  tf_ibuf_plot <- tf_ibuf |>
+    group_by(misc) |>
+    top_n(5) |>
+    ggplot(aes(
+      x = tf_idf,
+      y = reorder_within(word, tf_idf, misc)
+    )) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      x = "Term Frequency - Inverse Equipment Position Frequency",
+      y = NULL,
+      title = "Top five words by term frequency - inverse equipment position frequency",
+      subtitle = "Measure of how important a word is for naming an exercise based on equipment position used in the collection of exercises examined"
+    ) +
+    scale_y_reordered() +
+    facet_wrap( ~ misc, scales = "free") +
+    theme_bw()
+
+
+  q14_split <- data |>
+    select(ResponseId, Q14) |>
+    group_by(ResponseId) |>
+    slice_head(n=1) |>
+    separate(Q14, into = c("a","b","c","d","e"), sep = ",") |>
+    pivot_longer(2:6,
+                 names_to = "x",
+                 values_to = "populations") |>
+    mutate(populations = case_when(
+      populations == " otherwise healthy)" ~ NA,
+      populations == "General population (non-clinical" ~ "genpop",
+      populations == "Athletes" ~ "athletes",
+      populations == "Clinical populations" ~ "clinpop",
+      populations == "I have never instructed or prescribed the use of this type of exercise for others" ~ "none"
+    )) |>
+    filter(!is.na(populations)) |>
+    fastDummies::dummy_cols("populations") |>
+    group_by(ResponseId) |>
+    summarise(athletes = sum(populations_athletes),
+              genpop = sum(populations_genpop),
+              clinpop = sum(populations_clinpop),
+              none = sum(populations_none))
+
+tbl <- data |>
+  group_by(ResponseId) |>
+  slice_head(n=1) |>
+  left_join(q14_split, by = "ResponseId") |>
+  ungroup() |>
+  select(Q2, Q3, Q6, Q7, Q8, Q9, Q10, Q11, Q12, Q13, athletes, genpop, clinpop, none, Q15) |>
+  mutate(Q8 = as.numeric(case_when(
+    Q8 == "0 days per week" ~ 0,
+    Q8 == "1 day per week" ~ 1,
+    Q8 == "2 days per week" ~ 2,
+    Q8 == "3 days per week" ~ 3,
+    Q8 == "4 days per week" ~ 4,
+    Q8 == "5 days per week" ~ 5,
+    Q8 == "6 days per week" ~ 6,
+    Q8 == "7 days per week" ~ 7
+  ))) |>
+  rename(`Biological sex` = "Q2",
+         `Age (years)` = "Q3",
+         `Highest level of education` = "Q6",
+         `University-level qualification in a field related to exercise, physical activity, or sport?` = "Q7",
+         `Typical resistance training frequency (days)` = "Q8",
+         `Resistance training experience (years)` = "Q9",
+         `Participated in a weightlifting, powerlifting, or strongman competition?` = "Q10",
+         `Participated in a bodybuilding competition or other physique-based competition?` = "Q11",
+         `Ever employed in a job involving instruction and/or prescription of resistance training` = "Q12",
+         `Holds a certification/license qualifying instruction and/or prescription of resistance training` = "Q13",
+         `Instructed and/or prescribed resistance training for athletes` = "athletes",
+         `Instructed and/or prescribed resistance training for the general population` = "genpop",
+         `Instructed and/or prescribed resistance training for clinical populations` = "clinpop",
+         `Never instructed and/or prescribed resistance training` = "none",
+         `Current or most recent job role` = "Q15"
+         ) |>
+  gtsummary::tbl_summary(type = c(`Typical resistance training frequency (days)`) ~ "continuous",
+                         missing = "no")
+
+summary_tbl <- as.data.frame(tbl$table_body) %>%
+  mutate(Characteristic = label,
+         Summary = stat_0) %>%
+  select(Characteristic, Summary) %>%
+  filter(Characteristic != "Unknown")
+
+tinytable::tt(as.data.frame(tbl$table_body))
+
+
+likert_levels <- c(
+  "Strongly disagree",
+  "Disagree",
+  "Neither agree nor disagree",
+  "Agree",
+  "Strongly agree",
+  "Don't know"
+)
+
+data |>
+  group_by(ResponseId) |>
+  slice_head(n=1) |>
+  ungroup() |>
+  select(Q68_1,Q68_2,Q68_3,Q68_4,Q68_5) |>
+  rename(
+    "Exercise names are important" = Q68_1,
+    "Exercises are named inconsistently" =  Q68_2,
+    "Exercise names impact how information about exercise is learned" = Q68_3,
+    "I sometimes call the same exercise by different names" = Q68_4,
+    "A system that standardizes exercise names would be beneficial" = Q68_5
+  ) |>
+  mutate(across(everything(), ~ factor(.x, levels = c(
+    "Strongly disagree",
+    "Disagree",
+    "Neutral",
+    "Agree",
+    "Strongly agree"
+  )))) |>
+  ggstats::gglikert(totals_accuracy = TRUE) +
+  scale_y_discrete(labels = function(x) str_wrap(x, width = 25))
+
+
+
+
+
+likert_levels <- c(
+  "Strongly disagree",
+  "Disagree",
+  "Neither agree nor disagree",
+  "Agree",
+  "Strongly agree"
+)
+set.seed(42)
+df <-
+  tibble(
+    q1 = sample(likert_levels, 150, replace = TRUE),
+    q2 = sample(likert_levels, 150, replace = TRUE, prob = 5:1),
+    q3 = sample(likert_levels, 150, replace = TRUE, prob = 1:5),
+    q4 = sample(likert_levels, 150, replace = TRUE, prob = 1:5),
+    q5 = sample(c(likert_levels, NA), 150, replace = TRUE),
+    q6 = sample(likert_levels, 150, replace = TRUE, prob = c(1, 0, 1, 1, 0))
+  ) |>
+  mutate(across(everything(), ~ factor(.x, levels = likert_levels)))
+
+ggstats::gglikert(df)
+

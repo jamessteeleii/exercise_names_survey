@@ -1,6 +1,6 @@
 # Read in survey key
-read_key <- function() {
-  key <- read_csv("data/Key.csv")
+read_key <- function(key_file) {
+  key <- read_csv(key_file)
 }
 
 # Read in and prepare data
@@ -20,13 +20,13 @@ read_prepare_data <- function(key) {
       survey = case_when(
         survey == files[1] ~ "NSCA",
         survey == files[2] ~ "Social Media",
-        survey == files[3] ~ "vitruvian"
+        survey == files[3] ~ "Vitruvian"
       )
     ) |>
 
     # Pivot longer so responses for both question types (recognise, name) are tidy
     pivot_longer(
-      cols = c(24:65, 67:74),
+      cols = c(23:64, 66:73),
       names_to = "question",
       values_to = "response"
     )
@@ -56,6 +56,67 @@ read_prepare_data <- function(key) {
 
            # And for English is their primary language for discussing exercise
            Q5 == "Yes")
+}
+
+# Create demographic characteristics data table
+make_demographics_tbl <- function(data) {
+  q14_split <- data |>
+    select(ResponseId, Q14) |>
+    group_by(ResponseId) |>
+    slice_head(n=1) |>
+    separate(Q14, into = c("a","b","c","d","e"), sep = ",") |>
+    pivot_longer(2:6,
+                 names_to = "x",
+                 values_to = "populations") |>
+    mutate(populations = case_when(
+      populations == " otherwise healthy)" ~ NA,
+      populations == "General population (non-clinical" ~ "genpop",
+      populations == "Athletes" ~ "athletes",
+      populations == "Clinical populations" ~ "clinpop",
+      populations == "I have never instructed or prescribed the use of this type of exercise for others" ~ "none"
+    )) |>
+    filter(!is.na(populations)) |>
+    dummy_cols("populations") |>
+    group_by(ResponseId) |>
+    summarise(athletes = sum(populations_athletes),
+              genpop = sum(populations_genpop),
+              clinpop = sum(populations_clinpop),
+              none = sum(populations_none))
+
+  tbl <- data |>
+    group_by(ResponseId) |>
+    slice_head(n=1) |>
+    left_join(q14_split, by = "ResponseId") |>
+    ungroup() |>
+    select(Q2, Q3, Q6, Q7, Q8, Q9, Q10, Q11, Q12, Q13, athletes, genpop, clinpop, none, Q15) |>
+    mutate(Q8 = as.numeric(case_when(
+      Q8 == "0 days per week" ~ 0,
+      Q8 == "1 day per week" ~ 1,
+      Q8 == "2 days per week" ~ 2,
+      Q8 == "3 days per week" ~ 3,
+      Q8 == "4 days per week" ~ 4,
+      Q8 == "5 days per week" ~ 5,
+      Q8 == "6 days per week" ~ 6,
+      Q8 == "7 days per week" ~ 7
+    ))) |>
+    rename(`Biological sex` = "Q2",
+           `Age (years)` = "Q3",
+           `Highest level of education` = "Q6",
+           `University-level qualification in a field related to exercise, physical activity, or sport?` = "Q7",
+           `Typical resistance training frequency (days)` = "Q8",
+           `Resistance training experience (years)` = "Q9",
+           `Participated in a weightlifting, powerlifting, or strongman competition?` = "Q10",
+           `Participated in a bodybuilding competition or other physique-based competition?` = "Q11",
+           `Ever employed in a job involving instruction and/or prescription of resistance training` = "Q12",
+           `Holds a certification/license qualifying instruction and/or prescription of resistance training` = "Q13",
+           `Instructed and/or prescribed resistance training for athletes` = "athletes",
+           `Instructed and/or prescribed resistance training for the general population` = "genpop",
+           `Instructed and/or prescribed resistance training for clinical populations` = "clinpop",
+           `Never instructed and/or prescribed resistance training` = "none",
+           `Current or most recent job role` = "Q15"
+    )
+
+  tbl
 }
 
 # Create tokens
@@ -744,7 +805,7 @@ plot_tf_ief <- function(tokens) {
     )) +
     geom_col(show.legend = FALSE) +
     labs(
-      x = "Term Frequency - Inverse Exercise Frequency (tf-ief)",
+      x = "Term Frequency - Inverse Exercise Frequency",
       y = NULL,
       title = "Top five words by term frequency - inverse exercise frequency",
       subtitle = "Measure of how important a word is for naming a particular exercise in the collection of exercises examined"
@@ -754,6 +815,190 @@ plot_tf_ief <- function(tokens) {
     theme_bw() +
     theme(strip.text = element_text(size = 5))
 
+}
+
+# Plot the term frequency-inverse body position frequency for recognised exercises
+plot_tf_ibpf <- function(tokens) {
+  body_position_words <- tokens |>
+    filter(recognise == "YES") |>
+    count(body_position, word, sort = TRUE)
+
+  # inverse exercise frequency for recognised exercises
+  tf_ibpf <- body_position_words |>
+    bind_tf_idf(word, body_position, n)
+
+  tf_ibpf_plot <- tf_ibpf |>
+    group_by(body_position) |>
+    top_n(5) |>
+    ggplot(aes(
+      x = tf_idf,
+      y = reorder_within(word, tf_idf, body_position)
+    )) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      x = "Term Frequency - Inverse Body Position Frequency",
+      y = NULL,
+      title = "Top five words by term frequency - inverse body position frequency",
+      subtitle = "Measure of how important a word is for naming an exercise based on body position in the collection of exercises examined"
+    ) +
+    scale_y_reordered() +
+    facet_wrap( ~ body_position, scales = "free") +
+    theme_bw()
+
+}
+
+# Plot the term frequency-inverse body part frequency for recognised exercises
+plot_tf_ibpartf <- function(tokens) {
+  body_part_words <- tokens |>
+    filter(recognise == "YES") |>
+    separate(body_part, into = c("a","b","c"), sep = ",") |>
+    pivot_longer(c(a,b,c),
+                 names_to = "x",
+                 values_to = "body_part") |>
+    filter(!is.na(body_part)) |>
+    count(body_part, word, sort = TRUE)
+
+  # inverse exercise frequency for recognised exercises
+  tf_ibpartf <- body_part_words |>
+    bind_tf_idf(word, body_part, n)
+
+  tf_ibpartf_plot <- tf_ibpartf |>
+    group_by(body_part) |>
+    top_n(5) |>
+    ggplot(aes(
+      x = tf_idf,
+      y = reorder_within(word, tf_idf, body_part)
+    )) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      x = "Term Frequency - Inverse Body Part Frequency",
+      y = NULL,
+      title = "Top five words by term frequency - inverse body part frequency",
+      subtitle = "Measure of how important a word is for naming an exercise based on body part in the collection of exercises examined"
+    ) +
+    scale_y_reordered() +
+    facet_wrap( ~ body_part, scales = "free") +
+    theme_bw()
+
+}
+
+# Plot the term frequency-inverse action frequency for recognised exercises
+plot_tf_iaf <- function(tokens) {
+  action_words <- tokens |>
+    filter(recognise == "YES") |>
+    count(action, word, sort = TRUE)
+
+  # inverse exercise frequency for recognised exercises
+  tf_iaf <- action_words |>
+    bind_tf_idf(word, action, n)
+
+  tf_iaf_plot <- tf_iaf |>
+    group_by(action) |>
+    top_n(5) |>
+    ggplot(aes(
+      x = tf_idf,
+      y = reorder_within(word, tf_idf, action)
+    )) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      x = "Term Frequency - Inverse Action Frequency",
+      y = NULL,
+      title = "Top five words by term frequency - inverse action frequency",
+      subtitle = "Measure of how important a word is for naming an exercise based on action performed in the collection of exercises examined"
+    ) +
+    scale_y_reordered() +
+    facet_wrap( ~ action, scales = "free") +
+    theme_bw()
+
+}
+
+# Plot the term frequency-inverse action frequency for recognised exercises
+plot_tf_iadf <- function(tokens) {
+  action_direction_words <- tokens |>
+    filter(recognise == "YES") |>
+    count(action_direction, word, sort = TRUE)
+
+  # inverse exercise frequency for recognised exercises
+  tf_iadf <- action_direction_words |>
+    bind_tf_idf(word, action_direction, n)
+
+  tf_iadf_plot <- tf_iadf |>
+    group_by(action_direction) |>
+    top_n(5) |>
+    ggplot(aes(
+      x = tf_idf,
+      y = reorder_within(word, tf_idf, action_direction)
+    )) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      x = "Term Frequency - Inverse Action Direction Frequency",
+      y = NULL,
+      title = "Top five words by term frequency - inverse action direction frequency",
+      subtitle = "Measure of how important a word is for naming an exercise based on action direction performed in the collection of exercises examined"
+    ) +
+    scale_y_reordered() +
+    facet_wrap( ~ action_direction, scales = "free") +
+    theme_bw()
+
+}
+
+# Plot the term frequency-inverse equipment frequency for recognised exercises
+plot_tf_iequipf <- function(tokens) {
+  equipment_words <- tokens |>
+    filter(recognise == "YES") |>
+    count(equipment, word, sort = TRUE)
+
+  # inverse exercise frequency for recognised exercises
+  tf_iequipf <- equipment_words |>
+    bind_tf_idf(word, equipment, n)
+
+  tf_iequipf_plot <- tf_iequipf |>
+    group_by(equipment) |>
+    top_n(5) |>
+    ggplot(aes(
+      x = tf_idf,
+      y = reorder_within(word, tf_idf, equipment)
+    )) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      x = "Term Frequency - Inverse Equipment Frequency",
+      y = NULL,
+      title = "Top five words by term frequency - inverse equipment frequency",
+      subtitle = "Measure of how important a word is for naming an exercise based on equipment used in the collection of exercises examined"
+    ) +
+    scale_y_reordered() +
+    facet_wrap( ~ equipment, scales = "free") +
+    theme_bw()
+}
+
+# Plot the term frequency-inverse equipment frequency for recognised exercises
+plot_tf_ibuf <- function(tokens) {
+  bi_uni_words <- tokens |>
+    filter(recognise == "YES") |>
+    count(misc, word, sort = TRUE)
+
+  # inverse exercise frequency for recognised exercises
+  tf_ibuf <- bi_uni_words |>
+    filter(!is.na(misc)) |>
+    bind_tf_idf(word, misc, n)
+
+  tf_ibuf_plot <- tf_ibuf |>
+    group_by(misc) |>
+    top_n(5) |>
+    ggplot(aes(
+      x = tf_idf,
+      y = reorder_within(word, tf_idf, misc)
+    )) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      x = "Term Frequency - Inverse Bilateral/Unilateral Frequency",
+      y = NULL,
+      title = "Top five words by term frequency - inverse bilateral/unilateral frequency",
+      subtitle = "Measure of how important a word is for naming an exercise based on whether exercise is bilateral/unilateral in the collection of exercises examined"
+    ) +
+    scale_y_reordered() +
+    facet_wrap( ~ misc, scales = "free") +
+    theme_bw()
 }
 
 # Plot the bigram frequencies for recognised
@@ -772,7 +1017,7 @@ plot_recognise_bigrams <- function(bigrams) {
       select(word1, word2, n) |>
       ungroup() |>
       mutate(total = sum(n)) |>
-      slice(1:5) |>
+      slice_max(n, n = 5) |>
       as_tbl_graph() |>
       mutate(title = paste(i))
 
@@ -832,17 +1077,17 @@ plot_recognise_bigrams <- function(bigrams) {
       bigram_plots$`standing calf (heel) raise (machine)` +
       bigram_plots$`upright row` +
       bigram_plots$`vertical chest press (machine)` +
-      bigram_plots$`virtruvian back squat with bar` +
-      bigram_plots$`virtruvian bench press with bar` +
-      bigram_plots$`virtruvian bent-over row with bar` +
-      bigram_plots$`virtruvian biceps curl with bar` +
+      bigram_plots$`vitruvian back squat with bar` +
+      bigram_plots$`vitruvian bench press with bar` +
+      bigram_plots$`vitruvian bent-over row with bar` +
+      bigram_plots$`vitruvian biceps curl with bar` +
       bigram_plots$`wrist curl`
   ) +
     plot_annotation(title = "Top five bigrams by frequency for those who did recognise the exercise",
                     caption = "Note, bigrams with higher frequencies indicated by darker edges between nodes")
 }
 
-# Plot the bigram frequencies for recognised
+# Plot the bigram frequencies for not recognised
 plot_did_not_recognise_bigrams <- function(bigrams) {
   # bigram plots
 
@@ -858,7 +1103,7 @@ plot_did_not_recognise_bigrams <- function(bigrams) {
       select(word1, word2, n) |>
       ungroup() |>
       mutate(total = sum(n)) |>
-      slice(1:5) |>
+      slice_max(n, n = 5) |>
       as_tbl_graph() |>
       mutate(title = paste(i))
 
@@ -933,12 +1178,37 @@ plot_did_not_recognise_bigrams <- function(bigrams) {
       bigram_plots$`standing calf (heel) raise (machine)` +
       bigram_plots$`upright row` +
       bigram_plots$`vertical chest press (machine)` +
-      bigram_plots$`virtruvian back squat with bar` +
-      bigram_plots$`virtruvian bench press with bar` +
-      bigram_plots$`virtruvian bent-over row with bar` +
-      bigram_plots$`virtruvian biceps curl with bar` +
+      bigram_plots$`vitruvian back squat with bar` +
+      bigram_plots$`vitruvian bench press with bar` +
+      bigram_plots$`vitruvian bent-over row with bar` +
+      bigram_plots$`vitruvian biceps curl with bar` +
       bigram_plots$`wrist curl`
   ) +
     plot_annotation(title = "Top five bigrams by frequency for those who did not recognise the exercise",
                     caption = "Note, bigrams with higher frequencies indicated by darker edges between nodes")
+}
+
+# Plot likert questions about exercise names
+plot_likert_exercise_names <- function(data) {
+  data |>
+    group_by(ResponseId) |>
+    slice_head(n=1) |>
+    ungroup() |>
+    select(Q68_1,Q68_2,Q68_3,Q68_4,Q68_5) |>
+    rename(
+      "Exercise names are important" = Q68_1,
+      "Exercises are named inconsistently" =  Q68_2,
+      "Exercise names impact how information about exercise is learned" = Q68_3,
+      "I sometimes call the same exercise by different names" = Q68_4,
+      "A system that standardizes exercise names would be beneficial" = Q68_5
+    ) |>
+    mutate(across(everything(), ~ factor(.x, levels = c(
+      "Strongly disagree",
+      "Disagree",
+      "Neutral",
+      "Agree",
+      "Strongly agree"
+    )))) |>
+    gglikert(totals_accuracy = TRUE) +
+    scale_y_discrete(labels = function(x) str_wrap(x, width = 25))
 }

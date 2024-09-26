@@ -1,5 +1,5 @@
 question,question_wording,book_exercise_name,body_position,body_part,action,equipment,equipment_position,action_direction,misc
-Q1,Consent,,,,,,,,
+Q1,Consent?,,,,,,,,
 Q2,Please indicate your biological sex,,,,,,,,
 Q3,What is your age?,,,,,,,,
 Q4,What is your country of residence?,,,,,,,,
@@ -16,57 +16,57 @@ Q14,"In which populations have you instructed or prescribed the use of exercise 
 Q15,Which of the following best describes your current job or your last job if you are currently unemployed or retired? - Selected Choice,,,,,,,,
 Q15_11_TEXT,Which of the following best describes your current job or your last job if you are currently unemployed or retired? - Other (type job in the space provided) - Text,,,,,,,,
 Q16,Attention Check,,,,,,,,
-Q17,Do you recognise this exercise?,upright row,standing,"shoulder,back,arm",row,barbell,,up,
-Q18,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",upright row,standing,"shoulder,back,arm",row,barbell,,up,
-Q19,Do you recognise this exercise?,seated barbell shoulder press,seated,"shoulder,chest,arm",press,barbell,"bench,vertical",up,
-Q20,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",seated barbell shoulder press,seated,"shoulder,chest,arm",press,barbell,"bench,vertical",up,
-Q21,Do you recognise this exercise?,barbell biceps curl,standing,elbow,flexion,barbell,,up,
-Q22,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",barbell biceps curl,standing,elbow,flexion,barbell,,up,
-Q23,Do you recognise this exercise?,back squat,standing,"leg,trunk",squat,barbell,,up,
-Q24,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",back squat,standing,"leg,trunk",squat,barbell,,up,
-Q25,Do you recognise this exercise?,lat pulldown (machine),seated,"shoulder,back,arm",pull,machine,,down,
-Q26,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",lat pulldown (machine),seated,"shoulder,back,arm",pull,machine,,down,
-Q27,Do you recognise this exercise?,seated row (machine),seated,"shoulder,back,arm",row,machine,,reverse,
-Q28,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",seated row (machine),seated,"shoulder,back,arm",row,machine,,reverse,
-Q29,Do you recognise this exercise?,standing calf (heel) raise (machine),standing,ankle,plantarflexion,machine,,up,
-Q30,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",standing calf (heel) raise (machine),standing,ankle,plantarflexion,machine,,up,
-Q31,Do you recognise this exercise?,flat dumbbell fly,supine,"chest,shoulder",fly,dumbbell,,up,
-Q32,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",flat dumbbell fly,supine,"chest,shoulder",fly,dumbbell,,up,
-Q33,Do you recognise this exercise?,wrist curl,seated,wrist,flexion,barbell,,up,
-Q34,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",wrist curl,seated,wrist,flexion,barbell,,up,
+Q17,Do you recognise this exercise?,upright row,standing,"shoulder,back,arm",row,barbell,,up,bilateral
+Q18,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",upright row,standing,"shoulder,back,arm",row,barbell,,up,bilateral
+Q19,Do you recognise this exercise?,seated barbell shoulder press,seated,"shoulder,chest,arm",press,barbell,"bench,vertical",up,bilateral
+Q20,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",seated barbell shoulder press,seated,"shoulder,chest,arm",press,barbell,"bench,vertical",up,bilateral
+Q21,Do you recognise this exercise?,barbell biceps curl,standing,elbow,flexion,barbell,,up,bilateral
+Q22,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",barbell biceps curl,standing,elbow,flexion,barbell,,up,bilateral
+Q23,Do you recognise this exercise?,back squat,standing,"leg,trunk",squat,barbell,,up,bilateral
+Q24,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",back squat,standing,"leg,trunk",squat,barbell,,up,bilateral
+Q25,Do you recognise this exercise?,lat pulldown (machine),seated,"shoulder,back,arm",pull,machine,,down,bilateral
+Q26,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",lat pulldown (machine),seated,"shoulder,back,arm",pull,machine,,down,bilateral
+Q27,Do you recognise this exercise?,seated row (machine),seated,"shoulder,back,arm",row,machine,,reverse,bilateral
+Q28,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",seated row (machine),seated,"shoulder,back,arm",row,machine,,reverse,bilateral
+Q29,Do you recognise this exercise?,standing calf (heel) raise (machine),standing,ankle,plantarflexion,machine,,up,bilateral
+Q30,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",standing calf (heel) raise (machine),standing,ankle,plantarflexion,machine,,up,bilateral
+Q31,Do you recognise this exercise?,flat dumbbell fly,supine,"chest,shoulder",fly,dumbbell,,up,bilateral
+Q32,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",flat dumbbell fly,supine,"chest,shoulder",fly,dumbbell,,up,bilateral
+Q33,Do you recognise this exercise?,wrist curl,seated,wrist,flexion,barbell,,up,bilateral
+Q34,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",wrist curl,seated,wrist,flexion,barbell,,up,bilateral
 Q35,Do you recognise this exercise?,hammer curl,standing,elbow,flexion,dumbbell,,up,unilateral
 Q36,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",hammer curl,standing,elbow,flexion,dumbbell,,up,unilateral
-Q37,Do you recognise this exercise?,leg (knee) extension (machine),seated,knee,extension,machine,,up,
-Q38,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",leg (knee) extension (machine),seated,knee,extension,machine,,up,
-Q39,Do you recognise this exercise?,flat barbell bench press,supine,"chest,shoulder,arm",press,barbell,"bench,flat",up,
-Q40,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",flat barbell bench press,supine,"chest,shoulder,arm",press,barbell,"bench,flat",up,
-Q41,Do you recognise this exercise?,seated calf (heel) raise (machine),seated,ankle,plantarflexion,machine,,up,
-Q42,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",seated calf (heel) raise (machine),seated,ankle,plantarflexion,machine,,up,
-Q43,Do you recognise this exercise?,vertical chest press (machine),seated,"chest,shoulder,arm",press,machine,,forward,
-Q44,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vertical chest press (machine),seated,"chest,shoulder,arm",press,machine,,forward,
-Q45,Do you recognise this exercise?,hip sled (machine),seated,"leg,hip,knee",press,machine,,forward,
-Q46,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",hip sled (machine),seated,"leg,hip,knee",press,machine,,forward,
+Q37,Do you recognise this exercise?,leg (knee) extension (machine),seated,knee,extension,machine,,up,bilateral
+Q38,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",leg (knee) extension (machine),seated,knee,extension,machine,,up,bilateral
+Q39,Do you recognise this exercise?,flat barbell bench press,supine,"chest,shoulder,arm",press,barbell,"bench,flat",up,bilateral
+Q40,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",flat barbell bench press,supine,"chest,shoulder,arm",press,barbell,"bench,flat",up,bilateral
+Q41,Do you recognise this exercise?,seated calf (heel) raise (machine),seated,ankle,plantarflexion,machine,,up,bilateral
+Q42,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",seated calf (heel) raise (machine),seated,ankle,plantarflexion,machine,,up,bilateral
+Q43,Do you recognise this exercise?,vertical chest press (machine),seated,"chest,shoulder,arm",press,machine,,forward,bilateral
+Q44,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vertical chest press (machine),seated,"chest,shoulder,arm",press,machine,,forward,bilateral
+Q45,Do you recognise this exercise?,hip sled (machine),seated,"leg,hip,knee",press,machine,,forward,bilateral
+Q46,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",hip sled (machine),seated,"leg,hip,knee",press,machine,,forward,bilateral
 Q47,Do you recognise this exercise?,one-arm dumbbell row,bent-over,"shoulder,back,arm",row,dumbbell,"bench,flat",up,unilateral
 Q48,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",one-arm dumbbell row,bent-over,"shoulder,back,arm",row,dumbbell,"bench,flat",up,unilateral
-Q49,Do you recognise this exercise?,pec deck (machine),seated,"chest,shoulder",fly,machine,,forward,
-Q50,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",pec deck (machine),seated,"chest,shoulder",fly,machine,,forward,
-Q51,Do you recognise this exercise?,shoulder press (machine),seated,"shoulder,chest,arm",press,machine,,up,
-Q52,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",shoulder press (machine),seated,"shoulder,chest,arm",press,machine,,up,
-Q53,Do you recognise this exercise?,bent-over row,bent-over,"shoulder,back,arm",row,barbell,,up,
-Q54,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",bent-over row,bent-over,"shoulder,back,arm",row,barbell,,up,
-Q55,Do you recognise this exercise?,incline dumbbell bench press,seated,"chest,shoulder,arm",press,dumbbell,"bench,incline",up,
-Q56,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",incline dumbbell bench press,seated,"chest,shoulder,arm",press,dumbbell,"bench,incline",up,
-Q57,Do you recognise this exercise?,lateral shoulder raise,standing,shoulder,raise,dumbbell,,up,
-Q58,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",lateral shoulder raise,standing,shoulder,raise,dumbbell,,up,
-Q59,What word or phrase would you personally use to describe the type of physical activity performed in all of the photographs you have just seen?,,,,,,,,
-Q60,Do you recognise this exercise?,vitruvian biceps curl with bar,standing,elbow,flexion,vitruvian,,up,
-Q61,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian biceps curl with bar,standing,elbow,flexion,vitruvian,,up,
-Q62,Do you recognise this exercise?,vitruvian bent-over row with bar,bent-over,"shoulder,back,arm",row,vitruvian,,up,
-Q63,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian bent-over row with bar,bent-over,"shoulder,back,arm",row,vitruvian,,up,
-Q64,Do you recognise this exercise?,vitruvian bench press with bar,supine,"chest,shoulder,arm",press,vitruvian,"bench,flat",up,
-Q65,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian bench press with bar,supine,"chest,shoulder,arm",press,vitruvian,"bench,flat",up,
-Q66,Do you recognise this exercise?,vitruvian back squat with bar,standing,"leg,trunk",squat,vitruvian,,up,
-Q67,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian back squat with bar,standing,"leg,trunk",squat,vitruvian,,up,
+Q49,Do you recognise this exercise?,pec deck (machine),seated,"chest,shoulder",fly,machine,,forward,bilateral
+Q50,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",pec deck (machine),seated,"chest,shoulder",fly,machine,,forward,bilateral
+Q51,Do you recognise this exercise?,shoulder press (machine),seated,"shoulder,chest,arm",press,machine,,up,bilateral
+Q52,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",shoulder press (machine),seated,"shoulder,chest,arm",press,machine,,up,bilateral
+Q53,Do you recognise this exercise?,bent-over row,bent-over,"shoulder,back,arm",row,barbell,,up,bilateral
+Q54,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",bent-over row,bent-over,"shoulder,back,arm",row,barbell,,up,bilateral
+Q55,Do you recognise this exercise?,incline dumbbell bench press,seated,"chest,shoulder,arm",press,dumbbell,"bench,incline",up,bilateral
+Q56,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",incline dumbbell bench press,seated,"chest,shoulder,arm",press,dumbbell,"bench,incline",up,bilateral
+Q57,Do you recognise this exercise?,lateral shoulder raise,standing,shoulder,raise,dumbbell,,up,bilateral
+Q58,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",lateral shoulder raise,standing,shoulder,raise,dumbbell,,up,bilateral
+Q59,What word or phrase would you personally use to describe the type of physical activity performed in all of the photographs you have just seen?,,,,,,,,bilateral
+Q60,Do you recognise this exercise?,vitruvian biceps curl with bar,standing,elbow,flexion,vitruvian,,up,bilateral
+Q61,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian biceps curl with bar,standing,elbow,flexion,vitruvian,,up,bilateral
+Q62,Do you recognise this exercise?,vitruvian bent-over row with bar,bent-over,"shoulder,back,arm",row,vitruvian,,up,bilateral
+Q63,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian bent-over row with bar,bent-over,"shoulder,back,arm",row,vitruvian,,up,bilateral
+Q64,Do you recognise this exercise?,vitruvian bench press with bar,supine,"chest,shoulder,arm",press,vitruvian,"bench,flat",up,bilateral
+Q65,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian bench press with bar,supine,"chest,shoulder,arm",press,vitruvian,"bench,flat",up,bilateral
+Q66,Do you recognise this exercise?,vitruvian back squat with bar,standing,"leg,trunk",squat,vitruvian,,up,bilateral
+Q67,"What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below.",vitruvian back squat with bar,standing,"leg,trunk",squat,vitruvian,,up,bilateral
 Q68_1,How strongly do you agree with the following statements? - Exercise names are important,,,,,,,,
 Q68_2,How strongly do you agree with the following statements? - Exercises are named inconsistently,,,,,,,,
 Q68_3,How strongly do you agree with the following statements? - Exercise names impact how information about exercise is learned,,,,,,,,
