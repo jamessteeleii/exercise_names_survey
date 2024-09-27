@@ -1,0 +1,42 @@
+---
+title: "`grateful` citation report"
+bibliography: grateful-refs.bib
+#csl: null.csl
+---
+
+## R packages used
+
+|Package         |Version |Citation                 |
+|:---------------|:-------|:------------------------|
+|base            |4.3.3   |@base                    |
+|fastDummies     |1.7.4   |@fastDummies             |
+|future          |1.33.2  |@RJ-2021-048             |
+|future.callr    |0.8.2   |@RJ-2021-048             |
+|ggraph          |2.2.1   |@ggraph                  |
+|ggstats         |0.7.0   |@ggstats                 |
+|grid            |4.3.3   |@grid                    |
+|gtsummary       |2.0.2   |@gtsummary               |
+|here            |1.0.1   |@here                    |
+|hunspell        |3.0.3   |@hunspell                |
+|igraph          |2.0.3   |@igraph2006; @igraph2024 |
+|lspline         |1.0.0   |@lspline                 |
+|marginaleffects |0.18.0  |@marginaleffects         |
+|patchwork       |1.2.0   |@patchwork               |
+|renv            |1.0.0   |@renv                    |
+|scales          |1.3.0   |@scales                  |
+|SemNetCleaner   |1.3.4   |@christensen2019semna    |
+|stringi         |1.8.3   |@stringi                 |
+|tarchetypes     |0.8.0   |@tarchetypes             |
+|targets         |1.6.0   |@targets                 |
+|tidygraph       |1.3.1   |@tidygraph               |
+|tidytext        |0.4.1   |@tidytext                |
+|tidyverse       |2.0.0   |@tidyverse               |
+|tinytable       |0.4.0   |@tinytable               |
+|wordcloud       |2.6     |@wordcloud               |
+
+**You can paste this paragraph directly in your report:**
+
+We used R version 4.3.3 [@base] and the following R packages: fastDummies v. 1.7.4 [@fastDummies], future v. 1.33.2 [@RJ-2021-048], future.callr v. 0.8.2 [@RJ-2021-048], ggraph v. 2.2.1 [@ggraph], ggstats v. 0.7.0 [@ggstats], grid v. 4.3.3 [@grid], gtsummary v. 2.0.2 [@gtsummary], here v. 1.0.1 [@here], hunspell v. 3.0.3 [@hunspell], igraph v. 2.0.3 [@igraph2006; @igraph2024], lspline v. 1.0.0 [@lspline], marginaleffects v. 0.18.0 [@marginaleffects], patchwork v. 1.2.0 [@patchwork], renv v. 1.0.0 [@renv], scales v. 1.3.0 [@scales], SemNetCleaner v. 1.3.4 [@christensen2019semna], stringi v. 1.8.3 [@stringi], tarchetypes v. 0.8.0 [@tarchetypes], targets v. 1.6.0 [@targets], tidygraph v. 1.3.1 [@tidygraph], tidytext v. 0.4.1 [@tidytext], tidyverse v. 2.0.0 [@tidyverse], tinytable v. 0.4.0 [@tinytable], wordcloud v. 2.6 [@wordcloud].
+
+## Package citations
+

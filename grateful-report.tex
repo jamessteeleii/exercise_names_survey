@@ -1,0 +1,297 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslentryspacingunit} % times entry-spacing
+\setlength{\cslentryspacingunit}{\parskip}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+  \let\oldpar\par
+  \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\cslentryspacingunit}
+ }%
+ {}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={grateful citation report},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{\texttt{grateful} citation report}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+\hypertarget{r-packages-used}{%
+\subsection{R packages used}\label{r-packages-used}}
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Package & Version & Citation \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+base & 4.3.3 & R Core Team (2024a) \\
+fastDummies & 1.7.4 & Kaplan (2024) \\
+future & 1.33.2 & Bengtsson (2021) \\
+future.callr & 0.8.2 & Bengtsson (2021) \\
+ggraph & 2.2.1 & Pedersen (2024a) \\
+ggstats & 0.7.0 & Larmarange (2024) \\
+grid & 4.3.3 & R Core Team (2024b) \\
+gtsummary & 2.0.2 & Sjoberg et al. (2021) \\
+here & 1.0.1 & Müller (2020) \\
+hunspell & 3.0.3 & Ooms (2023) \\
+igraph & 2.0.3 & Csardi and Nepusz (2006); Csárdi et al. (2024) \\
+lspline & 1.0.0 & Bojanowski (2017) \\
+marginaleffects & 0.18.0 & Arel-Bundock (2024a) \\
+patchwork & 1.2.0 & Pedersen (2024b) \\
+renv & 1.0.0 & Ushey and Wickham (2023) \\
+scales & 1.3.0 & Wickham, Pedersen, and Seidel (2023) \\
+SemNetCleaner & 1.3.4 & Christensen and Kenett (2019) \\
+stringi & 1.8.3 & Gagolewski (2022) \\
+tarchetypes & 0.8.0 & Landau (2021a) \\
+targets & 1.6.0 & Landau (2021b) \\
+tidygraph & 1.3.1 & Pedersen (2024c) \\
+tidytext & 0.4.1 & Silge and Robinson (2016) \\
+tidyverse & 2.0.0 & Wickham et al. (2019) \\
+tinytable & 0.4.0 & Arel-Bundock (2024b) \\
+wordcloud & 2.6 & Fellows (2018) \\
+\end{longtable}
+
+\textbf{You can paste this paragraph directly in your report:}
+
+We used R version 4.3.3 (R Core Team 2024a) and the following R
+packages: fastDummies v. 1.7.4 (Kaplan 2024), future v. 1.33.2
+(Bengtsson 2021), future.callr v. 0.8.2 (Bengtsson 2021), ggraph v.
+2.2.1 (Pedersen 2024a), ggstats v. 0.7.0 (Larmarange 2024), grid v.
+4.3.3 (R Core Team 2024b), gtsummary v. 2.0.2 (Sjoberg et al. 2021),
+here v. 1.0.1 (Müller 2020), hunspell v. 3.0.3 (Ooms 2023), igraph v.
+2.0.3 (Csardi and Nepusz 2006; Csárdi et al. 2024), lspline v. 1.0.0
+(Bojanowski 2017), marginaleffects v. 0.18.0 (Arel-Bundock 2024a),
+patchwork v. 1.2.0 (Pedersen 2024b), renv v. 1.0.0 (Ushey and Wickham
+2023), scales v. 1.3.0 (Wickham, Pedersen, and Seidel 2023),
+SemNetCleaner v. 1.3.4 (Christensen and Kenett 2019), stringi v. 1.8.3
+(Gagolewski 2022), tarchetypes v. 0.8.0 (Landau 2021a), targets v. 1.6.0
+(Landau 2021b), tidygraph v. 1.3.1 (Pedersen 2024c), tidytext v. 0.4.1
+(Silge and Robinson 2016), tidyverse v. 2.0.0 (Wickham et al. 2019),
+tinytable v. 0.4.0 (Arel-Bundock 2024b), wordcloud v. 2.6 (Fellows
+2018).
+
+\hypertarget{package-citations}{%
+\subsection*{Package citations}\label{package-citations}}
+\addcontentsline{toc}{subsection}{Package citations}
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-marginaleffects}{}}%
+Arel-Bundock, Vincent. 2024a. \emph{{marginaleffects}: Predictions,
+Comparisons, Slopes, Marginal Means, and Hypothesis Tests}.
+\url{https://marginaleffects.com/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-tinytable}{}}%
+---------. 2024b. \emph{{tinytable}: Simple and Configurable Tables in
+{``{HTML},''} {``{LaTeX},''} {``{Markdown},''} {``{Word},''}
+{``{PNG},''} {``{PDF},''} and {``{Typst}''} Formats}.
+\url{https://vincentarelbundock.github.io/tinytable/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-RJ-2021-048}{}}%
+Bengtsson, Henrik. 2021. {``A Unifying Framework for Parallel and
+Distributed Processing in r Using Futures.''} \emph{The R Journal} 13
+(2): 208--27. \url{https://doi.org/10.32614/RJ-2021-048}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-lspline}{}}%
+Bojanowski, Michal. 2017. \emph{{lspline}: Linear Splines with
+Convenient Parametrisations}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-christensen2019semna}{}}%
+Christensen, Alexander P, and Yoed N Kenett. 2019. {``Semantic Network
+Analysis {(SemNA)}: A Tutorial on Preprocessing, Estimating, and
+Analyzing Semantic Networks.''} \emph{PsyArXiv}.
+\url{https://doi.org/10.31234/osf.io/eht87}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-igraph2006}{}}%
+Csardi, Gabor, and Tamas Nepusz. 2006. {``The Igraph Software Package
+for Complex Network Research.''} \emph{InterJournal} Complex Systems:
+1695. \url{https://igraph.org}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-igraph2024}{}}%
+Csárdi, Gábor, Tamás Nepusz, Vincent Traag, Szabolcs Horvát, Fabio
+Zanini, Daniel Noom, and Kirill Müller. 2024. \emph{{igraph}: Network
+Analysis and Visualization in r}.
+\url{https://doi.org/10.5281/zenodo.7682609}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-wordcloud}{}}%
+Fellows, Ian. 2018. \emph{{wordcloud}: Word Clouds}.
+\href{http://blog.fellstat.com/?cat=11\%20http://www.fellstat.com}{http://blog.fellstat.com/?cat=11
+http://www.fellstat.com}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-stringi}{}}%
+Gagolewski, Marek. 2022. {``{stringi}: {F}ast and Portable Character
+String Processing in {R}.''} \emph{Journal of Statistical Software} 103
+(2): 1--59. \url{https://doi.org/10.18637/jss.v103.i02}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-fastDummies}{}}%
+Kaplan, Jacob. 2024. \emph{{fastDummies}: Fast Creation of Dummy
+(Binary) Columns and Rows from Categorical Variables}.
+\url{https://github.com/jacobkap/fastDummies}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-tarchetypes}{}}%
+Landau, William Michael. 2021a. \emph{{tarchetypes}: Archetypes for
+Targets}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-targets}{}}%
+---------. 2021b. {``The Targets r Package: A Dynamic Make-Like
+Function-Oriented Pipeline Toolkit for Reproducibility and
+High-Performance Computing.''} \emph{Journal of Open Source Software} 6
+(57): 2959. \url{https://doi.org/10.21105/joss.02959}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-ggstats}{}}%
+Larmarange, Joseph. 2024. \emph{{ggstats}: Extension to {``{ggplot2}''}
+for Plotting Stats}. \url{https://larmarange.github.io/ggstats/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-here}{}}%
+Müller, Kirill. 2020. \emph{{here}: A Simpler Way to Find Your Files}.
+\url{https://here.r-lib.org/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-hunspell}{}}%
+Ooms, Jeroen. 2023. \emph{{hunspell}: High-Performance Stemmer,
+Tokenizer, and Spell Checker}.
+\href{https://docs.ropensci.org/hunspell/\%0Ahttps://ropensci.r-universe.dev/hunspell}{https://docs.ropensci.org/hunspell/
+https://ropensci.r-universe.dev/hunspell}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-ggraph}{}}%
+Pedersen, Thomas Lin. 2024a. \emph{{ggraph}: An Implementation of
+Grammar of Graphics for Graphs and Networks}.
+\url{https://ggraph.data-imaginist.com}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-patchwork}{}}%
+---------. 2024b. \emph{{patchwork}: The Composer of Plots}.
+\url{https://patchwork.data-imaginist.com}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-tidygraph}{}}%
+---------. 2024c. \emph{{tidygraph}: A Tidy API for Graph Manipulation}.
+\url{https://tidygraph.data-imaginist.com}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-base}{}}%
+R Core Team. 2024a. \emph{{R}: A Language and Environment for
+Statistical Computing}. Vienna, Austria: R Foundation for Statistical
+Computing. \url{https://www.R-project.org/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-grid}{}}%
+---------. 2024b. \emph{{R}: A Language and Environment for Statistical
+Computing}. Vienna, Austria: R Foundation for Statistical Computing.
+\url{https://www.R-project.org/}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-tidytext}{}}%
+Silge, Julia, and David Robinson. 2016. {``{tidytext}: Text Mining and
+Analysis Using Tidy Data Principles in r.''} \emph{JOSS} 1 (3).
+\url{https://doi.org/10.21105/joss.00037}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-gtsummary}{}}%
+Sjoberg, Daniel D., Karissa Whiting, Michael Curry, Jessica A. Lavery,
+and Joseph Larmarange. 2021. {``Reproducible Summary Tables with the
+Gtsummary Package.''} \emph{{The R Journal}} 13: 570--80.
+\url{https://doi.org/10.32614/RJ-2021-053}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-renv}{}}%
+Ushey, Kevin, and Hadley Wickham. 2023. \emph{{renv}: Project
+Environments}. \url{https://CRAN.R-project.org/package=renv}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-tidyverse}{}}%
+Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy
+D'Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019.
+{``Welcome to the {tidyverse}.''} \emph{Journal of Open Source Software}
+4 (43): 1686. \url{https://doi.org/10.21105/joss.01686}.
+
+\leavevmode\vadjust pre{\hypertarget{ref-scales}{}}%
+Wickham, Hadley, Thomas Lin Pedersen, and Dana Seidel. 2023.
+\emph{{scales}: Scale Functions for Visualization}.
+\url{https://scales.r-lib.org}.
+
+\end{CSLReferences}
+
+\end{document}

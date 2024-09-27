@@ -17,6 +17,7 @@ freqs_exercise_recognise_plot|stem|43c595d8748e907b|5c79af4d88a6b903|7aacd2192f9
 freqs_exercise_recognise_plot_tiff|stem|321897881c29f4b2|ec329cefbbcee5ee|8f10467734193364|380884598||t19992.4255874063s|1701aa42bd45be76|89|rds|local|vector|||3.47||
 freqs_recognise_plot|stem|217dd29c199cb5e1|d83d9d2e8c602d9d|769a2f2227acff20|40248639||t19992.4239019444s|417b24a4853bcf66|2672986|rds|local|vector|||0.31|Using size aesthetic for lines was deprecated in ggplot2 3.4.0.ℹ Please use linewidth instead.|
 freqs_recognise_plot_tiff|stem|83bc4660dafae5cb|339677d450f048fa|5b646880f2bcafb3|-819796774||t19992.425532958s|0b52c5847220add9|82|rds|local|vector|||1.46||
+grateful_report|stem|161fa3e3165bb1c6|0271d5e4e7f6a584|ef46db3751d8e999|1345217321||t19993.6374639609s|36500b95d6893aee|74|rds|local|vector|||5.84|It is recommended to use given instead of middle.. It is recommended to use given instead of middle.|
 key|stem|a3c6f820ee24307f|61be35c3831aed6d|6b9c117466ef4c38|-805766486||t19992.4190925026s|6050f33040b33381|2602|rds|local|vector|||0.39||
 key_file|stem|f8289d3c50581a55|cb02b41b2515bbbd|ef46db3751d8e999|1411024132|C:/Users/james/Dropbox/Research/Jim Nuzzo/REPS -survey/Exercise Names/exercise_names_survey/data/Key.csv|t19992.418832379s|f9c28c1d886bb07d|13578|file|local|vector|||2.21||
 make_demographics_tbl|function|261335fff79b4352|||||||||||||||

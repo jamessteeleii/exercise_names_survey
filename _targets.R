@@ -11,7 +11,6 @@ tar_option_set(
     "fastDummies",
     "ggstats",
     "gtsummary",
-    # "janitor",
     "tidytext",
     "hunspell",
     "tidyverse",
@@ -19,15 +18,13 @@ tar_option_set(
     "stringi",
     "scales",
     "wordcloud",
-    "lspline",
-    # "furrr",
     "patchwork",
     "marginaleffects",
     "forcats",
     "igraph",
     "ggraph",
-    "tidygraph"
-    # "broom.mixed"
+    "tidygraph",
+    "grateful"
   )
 )
 
@@ -226,7 +223,11 @@ list(
       w = 7.5,
       h = 5
     )
-  )
+  ),
+
+  # Reporting
+  tar_target(grateful_report, cite_packages(out.dir = ".", cite.tidyverse = TRUE, out.format = "pdf"))
+
 
 
 
