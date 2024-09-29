@@ -1,0 +1,190 @@
+---
+title: "Text Analysis and Results"
+format: 
+  docx:
+    toc: false
+    number-sections: true
+    highlight-style: github
+    prefer-html: true
+bibliography: 
+  references.bib
+csl: apa.csl
+---
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| include: false
+
+knitr::opts_chunk$set(echo = TRUE, fig.align="center")
+options(knitr.kable.NA = '')
+
+library(tidyverse)
+library(patchwork)
+library(gtsummary)
+library(kableExtra)
+library(igraph)
+library(ggraph)
+library(tidygraph)
+library(tidytext)
+
+```
+
+# Text Analysis
+
+All code utilised for data preparation and analyses are available in either the Open Science Framework page for this project <https://osf.io/4uaqr/> or the corresponding GitHub repository <https://github.com/jamessteeleii/exercise_names_survey>. We cite all software and packages used in the analysis pipeline using the `grateful` package [@rodriguez-sanchezGratefulFacilitateCitation2023] which can be seen here: <https://osf.io/n6cqt>. The project was not pre-registered and all analyses are presented as exploratory and descriptive. 
+
+We focused our exploration primarily on word frequency based analyses of tokens as both single words and as bigrams (i.e., pairs of consecutive words) where the latter was used to understand how different word pairings were typically used. We began by examining across all exercises the most frequently used words by total count in addition to their term frequency calculated as $\frac{n_{word}}{n_{total}}$ and also visualised the linear relationship of term frequency on the log10 scale conditioned on the ranking of that term on the log10 scale (i.e., whether the terms in our corpus of text conform to Zipf's law that the frequency a word appears is inversely proportional to its rank). Additionally we examined differences in term frequency by whether or not an exercise was recognised or not, by specific exercises, and by their combination to identify whether or not there were idiosyncrasies in word usage conditioned on these variables. For those who recognised the exercises we also adapted the term frequency-inverse document frequency (tf-idf) statistic typically used in textual analysis to understand the importance of a word to a particular document in a collection (or corpus) of documents, to instead explore the importance of specific words to particular exercises examined which could instead be called the term-frequency-inverse exercise frequency (tf-ief) calculated for each word as: $\left(\frac{n_{word}}{n_{total}}\right)\times ln \left(\frac{n_{exercises}}{n_{exercises\ containing\ word}}\right)$. Higher values of tf-ief identify particular words as being particularly important for naming a given exercise. In addition to this we also calculated similar statistics grouped exercise by certain categories based on word types including: body position, body part, action performed, the direction of the action performed, equipment used, and whether the exercise was bilateral or unilaterally performed. These additional statistics for each category were calculated similarly as the tf-ief noted above instead swapping the subscript $exercises$ for each of the different word categories noted. With respect to out textual analyses we finally examined the frequencies at which different bigrams were used for specific exercises conditioned on whether participants recognised the exercises or not and visualised the networks of the top five bigrams used. Lastly, we visualised the proportions of participants responding to different categories on the 5-point Likert scale (ranging "Strongly disagree", "Disagree", "Neutral", "Agree", and "Strongly agree") including the total proportions of negative and positive responses (i.e., those "Strongly disagree" and "Disagree", or "Agree" and "Strongly agree" respectively).
+
+# Results
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
+targets::tar_load(data)
+
+sample_sizes <- data |>
+  group_by(ResponseId) |>
+  slice_head(n=1) |>
+  ungroup() |>
+  group_by(survey) |>
+  count()
+
+```
+From the responses that we obtained we initially filtered out any that failed the attention check and also any for whom English was not their primary language for discussing exercise. Thus, our total sample size for analyses was `r sum(sample_sizes$n)` across the three surveys (NSCA survey = `r sample_sizes$n[1]`, social media survey = `r sample_sizes$n[2]`, Vitruvian survey = `r sample_sizes$n[3]`). The demographic characteristics for the full sample can be seen in @tbl-demographics.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: tbl-demographics
+#| tbl-cap-location: "top"
+#| tbl-cap: Demographic characteristics for full sample.
+
+targets::tar_load(demographics_tbl)
+
+demographics_tbl <- demographics_tbl |> 
+  tbl_summary(type = c(`Typical resistance training frequency (days)`) ~ "continuous",
+                         missing = "no")
+
+summary_tbl <- as.data.frame(demographics_tbl$table_body) |>
+  mutate(Characteristic = label,
+         Summary = stat_0) |>
+  select(Characteristic, Summary) |>
+  filter(Characteristic != "Unknown") |>
+    filter(!row_number() %in% c(1, 5, 23))
+
+
+kable(summary_tbl) |>
+  pack_rows("Biological sex", 1, 2, bold = FALSE) |>
+  pack_rows("Highest level of education", 4, 9, bold = FALSE) |>
+  pack_rows("Current or most recent job role", 21, 31, bold = FALSE) |>
+  add_indent(c(1:2, 4:9, 21:31)) |>
+  footnote(
+    general = "Count data presented as n (%); continous data presented as median (Q1, Q3)"
+  ) |>
+    kable_classic(full_width = FALSE) 
+
+
+```
+
+The top twenty words by simple count, in addition to the distribution of term frequency and its relationship with rank can be seen for all words used in @fig-all-freq-plot. The distribution of term frequency was long tailed indicating some terms were commonly used and the corpus of terms broadly followed Zipf's law as seen by the monotonically decreasing relationship with term rank. This result was similar when looking across different exercises (see [https://osf.io/x4ury](https://osf.io/x4ury)).
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-all-freq-plot 
+#| fig-width: 15
+#| fig-height: 5
+#| fig-cap: Counts, term frequencies, and relationship between term frequency and rank for all words used.
+
+targets::tar_load(counts_freqs_plot)
+
+counts_freqs_plot
+
+```
+Of particular interest though was the impact of exercise recognition on term frequency distribution which can be seen in @fig-recognise-freq-plot. The lack long right tails suggests there are common words used by those who recognised the exercises, yet the absence of this for those who did not recognise them suggests that there are perhaps more idiosyncratic words being used to name exercises. This pattern appears also across exercises conditioned on recognition (see [https://osf.io/fgyeb](https://osf.io/fgyeb)).
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-recognise-freq-plot 
+#| fig-width: 15
+#| fig-height: 5
+#| fig-cap: Term frequencies, and relationship between term frequency and rank for words used conditioned on whether an exercise was recognised or not.
+
+targets::tar_load(freqs_recognise_plot)
+
+freqs_recognise_plot
+
+```
+What specific words were most important for naming particular exercises can be examined by the tf-ief statistic in @fig-tf-ief-plot. In most cases respondents recognising the exercises used terms that were indeed used in the "textbook" naming conventions for each exercise. The additional term frequency - inverse word category frequencies can be seen in the supplementary materials for body position (see [https://osf.io/9n7dm](https://osf.io/9n7dm)), body part (see [https://osf.io/6d7am](https://osf.io/6d7am)), action performed (see[https://osf.io/23ngw](https://osf.io/23ngw)), the direction of the action performed (see [https://osf.io/9a5wv](https://osf.io/9a5wv)), equipment used (see [https://osf.io/c2zpj](https://osf.io/c2zpj)), and whether the exercise was bilateral or unilaterally performed (see [https://osf.io/7rmjb](https://osf.io/7rmjb)). With the exception of equipment used, where it was clear that terms accurately identifying the equipment were important when naming an exercise which used that equipment, there was considerable variety in whether terms relating to the word categories exercises were grouped by were important when naming them.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-tf-ief-plot 
+#| fig-width: 10
+#| fig-height: 10
+#| fig-cap: Term frequency - inverse exercise frequency (tf-ief) indicating how imporant specific words are for naming particular exercises.
+
+targets::tar_load(tf_ief_plot)
+
+tf_ief_plot
+
+```
+
+The pairings of consecutive words used (bigrams) when naming exercises for those who recognised the exercise can be seen in @fig-bigram-recognise-plot, and for those who did not recognise the exercise in @fig-bigram-not-recognise-plot. Those who recognised the exercise typically used pairs of words, or indeed sequences of pairs of words, that reflected the "textbook" naming convention for the exercises. However, pairs of words used are more idiosyncratic for those not recognising the exercise further supporting the distribution of term frequencies shown above.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-bigram-recognise-plot 
+#| fig-width: 15
+#| fig-height: 12.5
+#| fig-cap: Pairs of consecutive words (bigrams) used in naming exercises by those who did recognise the exercise.
+
+targets::tar_load(recognise_bigrams_plot)
+
+recognise_bigrams_plot
+
+```
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-bigram-not-recognise-plot 
+#| fig-width: 15
+#| fig-height: 12.5
+#| fig-cap: Pairs of consecutive words (bigrams) used in naming exercises by those who did not recognise the exercise.
+
+targets::tar_load(did_not_recognise_bigrams_plot)
+
+did_not_recognise_bigrams_plot
+
+```
+
+Lastly, the majority of participants agreed or strongly agreed that exercise names are important (74%), exercises are named inconsistently (63%), exercise names impact how information about exercise learned (69%), that they sometimes call the same exercise by different names (73%), and that a system standardizing exercise names would be beneficial (69%). The breakdown of responses can be seen in @fig-likert-plot.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-likert-plot 
+#| fig-width: 7.5
+#| fig-height: 5
+#| fig-cap: Distribution of responses to each Likert scale question.
+
+targets::tar_load(exercise_names_likert_plot)
+
+exercise_names_likert_plot
+
+```
+
+# References
