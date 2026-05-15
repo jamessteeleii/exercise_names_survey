@@ -470,84 +470,6 @@ convert_to_bigrams <- function(data) {
 
 }
 
-# Plot simple counts and frequencies for all data
-plot_counts_freqs <- function(tokens) {
-  # Plot simple counts
-  simple_count_plot <- tokens |>
-    count(word, sort = TRUE) |>
-    mutate(word = reorder(word, n)) |>
-    ungroup() |>
-    slice(1:20) |>
-    ggplot(aes(n, word)) +
-    geom_col() +
-    labs(y = NULL,
-         x = "Count (n)",
-         title = "Top twenty words used") +
-    scale_y_discrete(limits = rev) +
-    theme_classic()
-
-  # tf as proportion of all words based on recognition
-
-  count_words <- tokens |>
-    count(word, sort = TRUE) |>
-    ungroup() |>
-    mutate(total = sum(n))
-
-  tf_plot <- ggplot(count_words, aes(n / total)) +
-    geom_histogram(show.legend = FALSE) +
-    scale_y_continuous(trans = scales::pseudo_log_trans()) +
-    labs(y = "Count (n)",
-         x = "Term Frequency (n/total)",
-         title = "Term frequency of words used") +
-    theme_bw()
-
-
-  # Zipfs law
-
-  freq_by_rank <- count_words |>
-    mutate(
-      rank = row_number(),
-      tf = n / total,
-      log10_rank = log10(rank),
-      log10_tf = log10(tf)
-    ) |>
-    ungroup()
-
-  lm <- lm(log10_tf ~ log10_rank, data = freq_by_rank)
-
-  zipf_preds <- predictions(lm)
-
-  zipf_plot <- freq_by_rank |>
-    ggplot() +
-    geom_line(
-      aes(x = rank, y = tf),
-      size = 1.1,
-      alpha = 0.8,
-      show.legend = FALSE
-    ) +
-    geom_ribbon(
-      data = zipf_preds,
-      aes(
-        x = 10 ^ log10_rank,
-        ymin = 10 ^ conf.low,
-        ymax = 10 ^ conf.high
-      ),
-      alpha = 0.25
-    ) +
-    geom_line(data = zipf_preds,
-              aes(x = 10 ^ log10_rank, y = 10 ^ estimate),
-              linetype = "dashed") +
-    labs(x = "Term Rank (log10 scale)",
-         y = "Term Frequency (proportion on log10 scale)",
-         title = "Relationship of term frequency and rank for words used") +
-    scale_x_log10() +
-    scale_y_log10() +
-    theme_bw()
-
-  (simple_count_plot + tf_plot + zipf_plot) &
-    theme(title = element_text(size = 9))
-}
-
 # Plot frequencies for data split by recognition
 plot_freqs_recognise <- function(tokens) {
   # tf as proportion of all words based on recognition
@@ -630,7 +552,8 @@ plot_freqs_exercise <- function(tokens) {
     group_by(book_exercise_name) |>
     summarize(total = sum(n))
 
-  exercise_words <- left_join(exercise_words, total_words)
+  exercise_words <- left_join(exercise_words, total_words) |>
+    mutate(book_exercise_name = str_to_title(book_exercise_name))
 
   tf_exercise_plot <- ggplot(exercise_words, aes(n / total)) +
     geom_histogram(show.legend = FALSE) +
@@ -703,7 +626,8 @@ plot_freqs_exercise_recognise <- function(tokens) {
     summarize(total = sum(n))
 
   exercise_recognise_words <-
-    left_join(exercise_recognise_words, total_words)
+    left_join(exercise_recognise_words, total_words) |>
+    mutate(book_exercise_name = str_to_title(book_exercise_name))
 
   tf_exercise_recognise_plot <-
     ggplot(exercise_recognise_words, aes(n / total, fill = recognise)) +
@@ -790,7 +714,8 @@ plot_freqs_exercise_recognise <- function(tokens) {
 plot_tf_ief <- function(tokens) {
   exercise_words <- tokens |>
     filter(recognise == "YES") |>
-    count(book_exercise_name, word, sort = TRUE)
+    count(book_exercise_name, word, sort = TRUE) |>
+    mutate(book_exercise_name = str_to_title(book_exercise_name))
 
   # inverse exercise frequency for recognised exercises
   tf_ief <- exercise_words |>
@@ -813,7 +738,7 @@ plot_tf_ief <- function(tokens) {
     scale_y_reordered() +
     facet_wrap( ~ book_exercise_name, scales = "free") +
     theme_bw() +
-    theme(strip.text = element_text(size = 5))
+    theme(strip.text = element_text(size = 10))
 
 }
 
@@ -821,7 +746,8 @@ plot_tf_ief <- function(tokens) {
 plot_tf_ibpf <- function(tokens) {
   body_position_words <- tokens |>
     filter(recognise == "YES") |>
-    count(body_position, word, sort = TRUE)
+    count(body_position, word, sort = TRUE) |>
+    mutate(body_position = str_to_title(body_position))
 
   # inverse exercise frequency for recognised exercises
   tf_ibpf <- body_position_words |>
@@ -856,7 +782,8 @@ plot_tf_ibpartf <- function(tokens) {
                  names_to = "x",
                  values_to = "body_part") |>
     filter(!is.na(body_part)) |>
-    count(body_part, word, sort = TRUE)
+    count(body_part, word, sort = TRUE) |>
+    mutate(body_part = str_to_title(body_part))
 
   # inverse exercise frequency for recognised exercises
   tf_ibpartf <- body_part_words |>
@@ -886,7 +813,8 @@ plot_tf_ibpartf <- function(tokens) {
 plot_tf_iaf <- function(tokens) {
   action_words <- tokens |>
     filter(recognise == "YES") |>
-    count(action, word, sort = TRUE)
+    count(action, word, sort = TRUE) |>
+    mutate(action = str_to_title(action))
 
   # inverse exercise frequency for recognised exercises
   tf_iaf <- action_words |>
@@ -912,11 +840,12 @@ plot_tf_iaf <- function(tokens) {
 
 }
 
-# Plot the term frequency-inverse action frequency for recognised exercises
+# Plot the term frequency-inverse action direction frequency for recognised exercises
 plot_tf_iadf <- function(tokens) {
   action_direction_words <- tokens |>
     filter(recognise == "YES") |>
-    count(action_direction, word, sort = TRUE)
+    count(action_direction, word, sort = TRUE) |>
+    mutate(action_direction = str_to_title(action_direction))
 
   # inverse exercise frequency for recognised exercises
   tf_iadf <- action_direction_words |>
@@ -946,7 +875,8 @@ plot_tf_iadf <- function(tokens) {
 plot_tf_iequipf <- function(tokens) {
   equipment_words <- tokens |>
     filter(recognise == "YES") |>
-    count(equipment, word, sort = TRUE)
+    count(equipment, word, sort = TRUE) |>
+    mutate(equipment = str_to_title(equipment))
 
   # inverse exercise frequency for recognised exercises
   tf_iequipf <- equipment_words |>
@@ -971,11 +901,12 @@ plot_tf_iequipf <- function(tokens) {
     theme_bw()
 }
 
-# Plot the term frequency-inverse equipment frequency for recognised exercises
+# Plot the term frequency-inverse bi/unilateral frequency for recognised exercises
 plot_tf_ibuf <- function(tokens) {
   bi_uni_words <- tokens |>
     filter(recognise == "YES") |>
-    count(misc, word, sort = TRUE)
+    count(misc, word, sort = TRUE) |>
+    mutate(misc = str_to_title(misc))
 
   # inverse exercise frequency for recognised exercises
   tf_ibuf <- bi_uni_words |>
@@ -1019,7 +950,7 @@ plot_recognise_bigrams <- function(bigrams) {
       mutate(total = sum(n)) |>
       slice_max(n, n = 5) |>
       as_tbl_graph() |>
-      mutate(title = paste(i))
+      mutate(title = str_to_title(paste(i)))
 
     set.seed(2020)
 
@@ -1041,6 +972,7 @@ plot_recognise_bigrams <- function(bigrams) {
       theme_bw() +
       theme(panel.border = element_rect(colour = "black", fill=NA),
             panel.grid = element_blank(),
+            strip.text = element_text(size = 10),
             axis.title = element_blank(),
             axis.text = element_blank(),
             axis.ticks = element_blank(),
@@ -1105,7 +1037,7 @@ plot_did_not_recognise_bigrams <- function(bigrams) {
       mutate(total = sum(n)) |>
       slice_max(n, n = 5) |>
       as_tbl_graph() |>
-      mutate(title = paste(i))
+      mutate(title = str_to_title(paste(i)))
 
     set.seed(2020)
 
@@ -1127,6 +1059,7 @@ plot_did_not_recognise_bigrams <- function(bigrams) {
       theme_bw() +
       theme(panel.border = element_rect(colour = "black", fill=NA),
             panel.grid = element_blank(),
+            strip.text = element_text(size = 10),
             axis.title = element_blank(),
             axis.text = element_blank(),
             axis.ticks = element_blank(),
@@ -1139,21 +1072,22 @@ plot_did_not_recognise_bigrams <- function(bigrams) {
 
   }
 
-  bigram_plots$`back squat`
+  bigram_plots$`Back Squat`
 
 
   (
     bigram_plots$`back squat` +
       bigram_plots$`barbell biceps curl` +
       bigram_plots$`bent-over row` +
-      tibble(title = "flat barbell bench press") |>
+      tibble(title = "Flat Barbell Bench Press") |>
       ggplot() +
       facet_grid(.~title) +
       theme_bw() +
-      annotate("text", label = "All respondents recognised this exercise",
+      annotate("text", label = "All* respondents recognised this exercise",
                x = 0.5, y = 0.5, size = 3) +
       theme(panel.border = element_rect(colour = "black", fill=NA),
-            panel.grid = element_blank(),
+            panel.grid = element_blank(),,
+            strip.text = element_text(size = 10),
             axis.title = element_blank(),
             axis.text = element_blank(),
             axis.ticks = element_blank(),

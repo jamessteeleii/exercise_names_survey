@@ -1,0 +1,299 @@
+---
+title: |
+  Names of resistance exercises: text analysis of survey responses
+date: last-modified
+date-format: long
+format: 
+  docx:
+    toc: false
+    number-sections: true
+    highlight-style: github
+    prefer-html: true
+author:
+  - name: James L. Nuzzo
+    affil-id: 1
+    orcid: 0000-0001-9081-0522
+    email: jameslnuzzo@gmail.com
+    corresponding: true
+  - name: James Steele
+    affil-id: 2,3,4
+    orcid: 0000-0002-8003-0757
+    email: james@steele-research.com
+affiliations:
+      - id: 1
+        name: The Nuzzo Letter, West Leederville, Western Australia, Australia
+      - id: 2
+        name: Steele Research Limited, Eastleigh, Hampshire, UK
+      - id: 3
+        name: MacroFactor, Stronger by Science Technologies LLC, Raleigh, North Carolina, USA
+      - id: 4
+        name: School of Health and Biomedical Sciences, Royal Melbourne Institute of Technology, Melbourne, VIC, Australia
+abstract: |
+  Names of resistance exercises play an important role in education and promoting exercise participation. Yet, previous research has documented that exercises are named inconsistently among exercise professionals and within exercise textbooks and journal articles. Greater standardization or the development of a taxonomy may therefore be warranted, but large-scale data on naming practices are limited. This study examined how resistance exercises are named in a large sample. A total of 1,849 individuals completed an online survey; analyses were restricted to 1,425 respondents who passed attention checks and reported English as their primary exercise-related language. Participants were predominantly male (76%), highly educated (82% held a Bachelor’s degree or higher; 42% in exercise-related fields), and experienced in resistance training (median 10 years [IQR: 5–15]). Nearly half of respondents held relevant certifications (46%) or had worked in resistance training instruction (49%). Respondents viewed images of exercises performed with free weights, traditional machines, and a connected adaptive resistance machine. Respondents indicated whether they recognised the exercise in each image and what they call the exercise. Text analyses examined word frequencies, term-frequency–inverse exercise frequency (tf-ief), and common bigrams. Most exercises were widely recognised (>90% of respondents), except those using connected adaptive machines (62.3–67.3% of respondents). Recognition influenced naming patterns: respondents who recognised exercises used more consistent, commonly shared terminology, whereas respondents who did not recognise exercises used more idiosyncratic naming. Equipment-related terms were consistently important, but other naming components (e.g., body position, body part, movement direction, unilateral/bilateral execution) varied substantially in importance. Bigrams showed that recognised exercises were typically labelled using “textbook” word pairings, while unrecognised exercises produced more variable combinations. Participants generally agreed that exercise names are important (74%), inconsistently used (63%), and influence learning (69%). Many respondents reported using multiple names for the same exercise (73%), and most respondents supported standardization of exercise names (69%). Overall, the findings suggest that exercise naming follows broad linguistic principles (e.g., Zipf’s law) but also highlight elements of a shared “folk taxonomy”. Despite this, there was substantial inconsistency in resistance exercise naming practices. However, whilst such a folk taxonomy might enable clear communication within public and applied settings, the development of standardized terminology or a formal scientific taxonomy might ensure that cross-communication and understanding across domains is more easily achieved. Alternatively, a hierarchical taxonomy and system of translation across synonyms in use already may be a valuable pursuit.
+keywords: [language, linguistics, nomenclature, resistance exercise, strength training, taxonomy, terminology] # optional
+bibliography: references.bib
+csl: apa.csl
+execute: 
+  echo: false
+  message: false
+  warning: false
+---
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| include: false
+
+targets::tar_config_set(store = here::here('_targets'))
+
+knitr::opts_chunk$set(echo = TRUE, fig.align="center")
+options(knitr.kable.NA = '')
+
+library(tidyverse)
+library(patchwork)
+library(gtsummary)
+# library(kableExtra)
+library(igraph)
+library(ggraph)
+library(tidygraph)
+library(tidytext)
+
+```
+
+
+# Introduction
+Movement patterns performed in resistance exercise programs are given names to facilitate communication and understanding of resistance exercise in both applied and scientific settings. Ideally, each resistance exercise would have a unique name, and this name would distinguish it from all other exercises, leading to a clear, cohesive, accurate, and consistent taxonomy of exercise names; or at the very least there would be shared understanding if synonyms are used as lexical labels.
+
+Limited descriptive research on use of exercise names exists [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021]. Of existing studies, all have documented that resistance exercises are named inconsistently in a range of settings and populations suggesting a lack of a shared taxonomy [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021]. Jackson et al. [-@jacksonStandardizationNomenclatureResistance2013] found that exercises are named inconsistently within and between individuals employed in various exercise-related professions (e.g., personal trainers, strength and conditioning coaches, athletic trainers, exercise academics). In previous work, the lead author [@nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021] found that resistance exercises are named inconsistently in textbooks and research articles. Additionally, the author revealed that exercise names consist of various types of words (e.g., action words, action direction words, body part words, body position words, equipment words, equipment position words) and that the way that these words are organized in exercise names (i.e., naming patterns) is  inconsistent [@nuzzoWordsPatternsThat2017].
+
+An inconsistent exercise nomenclature is problematic because of its potential to lead to diminished communication efficiency and efficacy. For example, the phrases “heel raise” and “calf raise” are used to refer to the same exercise, as are the phrases “arm curl” and “biceps curl” [@nuzzoInconsistentUseResistance2021]; yet, this confusion seems unnecessary and resolvable (see @jacksonStandardizationNomenclatureResistance2013, @nuzzoWordsPatternsThat2017, and @nuzzoInconsistentUseResistance2021, for more examples). Consequently, some researchers have made normative claims that exercise names should be standardized [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021; @nuzzoEccentricMuscleActions2023]. A standardized system of exercise names would perhaps not be too dissimilar to taxonomic and nomenclature systems that have been developed in other fields of biology [@winstonTwentyFirstCenturyBiological2018]. However, even in other fields there are often both folk and scientific taxonomies in use concomitantly by different groups i.e., lay people, applied practitioners, and scientists [@berlinGeneralPrinciplesClassification1973; @berlinSpeculationsGrowthEthnobotanical1972; @brownGeneralPrinciplesBiological1976]. Whilst within groups a shared taxonomy that differs from other groups may still enable clear communication to take place, for an applied scientific field such as exercise science, where there is often cross-communication between both groups, inconsistency has the potential to hamper communication and shared understanding.
+
+A move toward standardization will present challenges, particularly given the present degree of inconsistency shown in descriptive research [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021]. For example, there are various types of words that make up exercise names [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021; @nuzzoEccentricMuscleActions2023], and no consensus has been reached regarding what exercise naming pattern, if any, should be adopted, and what rules should be followed in naming exercises [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017]. Further, the extent to which scientists should adopt their own scientific taxonomy vs adopting any emergent folk taxonomy in use by the public and/or practitioners as a result of typical principles of natural language use (e.g., Zipf's law) is unclear in terms of how easily either would facilitate communication. Given the large scope of the problem, there is still a relative lack of data. Previous studies have been limited to a relatively small number of exercises, a small number of survey responders, and a narrowed focus of content, such as only examining naming by practitioners and in student textbooks or research articles [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021]. 
+
+To the extent that standardization of exercise names might be possible, an informative next step would be to understand how a large sample of individuals name various exercises. Therefore, the purpose of the current study was to explore how exercises are named in a large sample, including individuals who are employed in the fitness industry and individuals who are employed outside the fitness industry. Specifically, our aims were to (a) determine how recognisable specific resistance exercises are to people, (b) identify the types of words used to name those exercises, and (c) identify exercise naming patterns.
+
+# Methods
+## Sample and recruitment
+Multiple strategies were used to recruit survey respondents. First, in October of 2021, an advertisement to the survey was included in a newsletter sent out by a fitness equipment company (Vitruvian, West Perth, Australia) to their email list[^1]. This advertisement resulted in 40 respondents. Second, in October of 2021, an advertisement to the survey was included in the National Strength and Conditioning Association’s (NSCA) certification newsletter (approximately 50,000 subscribers). This advertisement resulted in 239 respondents. Third, in November of 2021, an advertisement to the survey was posted on social media, primarily on Twitter and Instagram. This advertisement resulted in 1,570 respondents.
+
+[^1]: At the time JN was employed by Vitruvian, hence having access to enable survey distribution via their email list.
+
+## Survey
+A survey was developed and hosted online (Qualtrics XM, Qualtrics International Inc., Provo, Utah, United States) (Supplementary File 1). The online survey consisted of an initial cover letter which described the survey’s aims and procedures. The survey was approved by the Human Research Ethics Committee at Edith Cowan University (2021-02687-NUZZO). To proceed with the survey, respondents were required to check an item indicating that they consent to participate and are 18 years of age or older. If individuals consented to participate in the survey, they proceeded to questions about sex, age, country of residence, primary language spoken, highest level of education completed, occupation type, and resistance exercise experience. Participants then completed questions about exercise names. Participants were shown two or more photographs of a given exercise and asked, *“Do you recognise this exercise?”* Irrespective of whether participants answered “yes” or “no” to this question, they then proceeded to a question that asked them to name the exercise: *“What do you personally call this exercise? If you are unsure or do not recognise the exercise, what is your best guess as to what this exercise is called? Type your answer in the space below."* Participants were asked to answer these questions for 25 different exercises, 21 of which were acquired from the National Strength and Conditioning Associations Essentials of Strength Training and Conditioning 4th edition textbook [@associationEssentialsStrengthTraining2016]. The other four photographs were acquired from the exercise database for the Vitruvian (a connected adaptive resistance exercise machine; see @nuzzoConnectiveAdaptiveResistance2023). The stock photos of each exercise were used with permission[^2] and displayed to survey respondents. A diverse set of exercises, which involved different body areas, body positions, joint actions, and equipment, were selected. Finally, using a five-point Likert scale, participants were asked how strongly they agree with the following statements about exercise names: *“Exercise names are important”*; *“Exercises are named inconsistently”*; *“Exercise names impact how information about exercise is learned”*; *“I sometimes call the same exercise by different names”*; and *“A system that standardizes exercise names would be beneficial.”* For all survey questions, participants were required to provide a response before proceeding to the next question. 
+
+[^2]: Unfortunately we were not afforded permission to reproduce the images outside of the survey and so cannot include them for reference here. Readers will need to view them in the original source material i.e., National Strength and Conditioning Associations Essentials of Strength Training and Conditioning 4th edition textbook [@associationEssentialsStrengthTraining2016].
+
+## Text Analysis
+All code utilised for data preparation and analyses are available in either the Open Science Framework page for this project <https://osf.io/4uaqr/> or the corresponding GitHub repository <https://github.com/jamessteeleii/exercise_names_survey>. We cite all software and packages used in the analysis pipeline using the `grateful` package [@rodriguez-sanchezGratefulFacilitateCitation2023] which can be seen here: <https://osf.io/n6cqt>. The project was not pre-registered and all analyses are presented as exploratory and descriptive. 
+
+We focused our exploration primarily on word frequency based analyses of tokens as both single words and as bigrams (i.e., pairs of consecutive words) where the latter was used to understand how different word pairings were typically used. Spelling errors were corrected using the `hunspell` spell checker library and then manually checked for any obvious errors which were manually corrected (see `convert_to_tokens()` and `convert_to_bigrams()` functions in the `functions.R` script: [https://osf.io/7nj6d](https://osf.io/7nj6d). Where double barrel terms were used these were split into unique words, and all pluralized terms were singularized.
+
+We began by examining the term frequency of words calculated as $\frac{n_{word}}{n_{total}}$ and also visualised the linear relationship of term frequency on the log10 scale conditioned on the ranking of that term on the log10 scale (i.e., whether the terms in our corpus of text conform to Zipf's law that the frequency a word appears is inversely proportional to its rank). Term frequency was examined by whether or not an exercise was recognised or not, by specific exercises, and by their combination to identify whether or not there were idiosyncrasies in word usage conditioned on these variables. For those who recognised the exercises we also adapted the term frequency-inverse document frequency (tf-idf) statistic typically used in textual analysis to understand the importance of a word to a particular document in a collection (or corpus) of documents, to instead explore the importance of specific words to particular exercises examined which could instead be called the term-frequency-inverse exercise frequency (tf-ief) calculated for each word as: $\left(\frac{n_{word}}{n_{total}}\right)\times ln \left(\frac{n_{exercises}}{n_{exercises\ containing\ word}}\right)$. Higher values of tf-ief identify particular words as being particularly important for naming a given exercise. In addition to this we also coded each exercise based on word types including body position, body part, action performed, the direction of the action performed, equipment used, and whether the exercise was bilateral or unilaterally performed, and then calculated similar statistics with exercises grouped by words within these word type categories. These additional statistics for each category were calculated similarly as the tf-ief noted above instead swapping the subscript $exercises$ for each of the different word type categories noted. With respect to our textual analyses we finally examined the frequencies at which different bigrams were used for specific exercises conditioned on whether participants recognised the exercises or not and visualised the networks of the top five bigrams used. Lastly, we visualised the proportions of participants responding to different categories on the 5-point Likert scale (ranging "Strongly disagree", "Disagree", "Neutral", "Agree", and "Strongly agree") including the total proportions of negative and positive responses (i.e., those "Strongly disagree" and "Disagree", or "Agree" and "Strongly agree" respectively).
+
+# Results
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
+targets::tar_load(data)
+
+sample_sizes <- data |>
+  group_by(ResponseId) |>
+  slice_head(n=1) |>
+  ungroup() |>
+  group_by(survey) |>
+  count()
+
+recognised <- data |>
+  filter(!is.na(recognise)) |>
+  group_by(book_exercise_name, recognise) |>
+  count() |>
+  group_by(book_exercise_name) |>
+  mutate(total = sum(n),
+         prop = scales::percent((n/total), accuracy = 0.1),
+         book_exercise_name = str_to_title(book_exercise_name)) |>
+  filter(!is.na(recognise)) |>
+  select(book_exercise_name, recognise, prop) |>
+  pivot_wider(names_from = recognise,
+              values_from = prop) |>
+  rename("Exercise" = book_exercise_name,
+         "Did not recognise" = NO,
+         "Recognised" = YES) |>
+  arrange(desc(Recognised))
+
+```
+From the responses that we obtained we initially filtered out any that failed the attention check and also any for whom English was not their primary language for discussing exercise. Thus, our total sample size for analyses was `r sum(sample_sizes$n)` across the three distribution methods (NSCA certification newsletter = `r sample_sizes$n[1]`, social media = `r sample_sizes$n[2]`, Vitruvian email list = `r sample_sizes$n[3]`). The demographic characteristics for the full sample can be seen in @tbl-demographics.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: tbl-demographics
+#| tbl-cap-location: "top"
+#| tbl-cap: Demographic characteristics for full sample.
+
+targets::tar_load(demographics_tbl)
+
+demographics_tbl <- demographics_tbl |> 
+  tbl_summary(type = c(`Typical resistance training frequency (days)`) ~ "continuous",
+                         missing = "no")
+
+summary_tbl <- as.data.frame(demographics_tbl$table_body) |>
+  mutate(Characteristic = label,
+         Summary = stat_0) |>
+  select(Characteristic, Summary) |>
+  filter(Characteristic != "Unknown") |>
+    filter(!row_number() %in% c(1, 5, 23))
+
+# kable(summary_tbl) |>
+#   pack_rows("Biological sex", 1, 2, bold = FALSE) |>
+#   pack_rows("Highest level of education", 4, 9, bold = FALSE) |>
+#   pack_rows("Current or most recent job role", 21, 31, bold = FALSE) |>
+#   add_indent(c(1:2, 4:9, 21:31)) |>
+#   footnote(
+#     general = "Count data presented as n (%); continous data presented as median (Q1, Q3)"
+#   ) |>
+#     kable_classic(full_width = FALSE) 
+
+knitr::kable(summary_tbl)
+
+```
+
+The majority of exercises were recognised by over 90% of respondents except for the four exercises performed on the connected adaptive resistance exercise machine (~62% to 67%). The percentage of respondents who did and did not (excluding non-responses) recognise each exercise is shown in @tbl-recognise.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: tbl-recognise
+#| tbl-cap-location: "top"
+#| tbl-cap: Percentage of respondents who did and did not recognise each exercise (ordered by percentage recognised).
+
+# kable(recognised) |>
+#     kable_classic(full_width = FALSE) 
+
+knitr::kable(recognised)
+
+
+```
+
+Exercise recognition impacted term frequency distribution which can be seen in @fig-recognise-freq-plot. The lack of long right tails suggests there are common words used by those who recognised the exercises, yet the absence of this for those who did not recognise them suggests that there are perhaps more idiosyncratic words being used to name exercises. This pattern appears also across exercises conditioned on recognition (see [https://osf.io/fgyeb](https://osf.io/fgyeb)).
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-recognise-freq-plot 
+#| fig-width: 15
+#| fig-height: 5
+#| fig-cap: Term frequencies, and relationship between term frequency and rank for words used conditioned on whether an exercise was recognised ("YES") or not ("NO").
+
+targets::tar_load(freqs_recognise_plot)
+
+freqs_recognise_plot
+
+```
+
+What specific words were most important for naming particular exercises can be examined by the tf-ief statistic in @fig-tf-ief-plot. In most cases respondents recognising the exercises used terms that were indeed used in the "textbook" naming conventions for each exercise. The additional term frequency - inverse word category frequencies can be seen in the supplementary materials for body position (see [https://osf.io/9n7dm](https://osf.io/9n7dm)), body part (see [https://osf.io/6d7am](https://osf.io/6d7am)), action performed (see[https://osf.io/23ngw](https://osf.io/23ngw)), the direction of the action performed (see [https://osf.io/9a5wv](https://osf.io/9a5wv)), equipment used (see [https://osf.io/c2zpj](https://osf.io/c2zpj)), and whether the exercise was bilateral or unilaterally performed (see [https://osf.io/7rmjb](https://osf.io/7rmjb)). With the exception of equipment used, where it was clear that terms accurately identifying the equipment were most important when naming an exercise which used that equipment, there was considerable variety in whether terms relating to the word categories exercises were grouped by were important when naming them or not.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-tf-ief-plot 
+#| fig-width: 10
+#| fig-height: 10
+#| fig-cap: Term frequency - inverse exercise frequency (tf-ief) indicating how imporant specific words are for naming particular exercises (note, names for exercises on each panel are the "textbook" names provided).
+
+targets::tar_load(tf_ief_plot)
+
+tf_ief_plot
+
+```
+
+The pairings of consecutive words used (bigrams) when naming exercises for those who recognised the exercise can be seen in @fig-bigram-recognise-plot, and for those who did not recognise the exercise in @fig-bigram-not-recognise-plot. Those who recognised the exercise typically used pairs of words, or indeed sequences of pairs of words, that reflected the "textbook" naming convention for the exercises. However, pairs of words used are more idiosyncratic for those not recognising the exercise further supporting the distribution of term frequencies shown above.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-bigram-recognise-plot 
+#| fig-width: 15
+#| fig-height: 12.5
+#| fig-cap: Pairs of consecutive words (bigrams) used in naming exercises by those who did recognise the exercise (note, names for exercises on each panel are the "textbook" names provided).
+
+targets::tar_load(recognise_bigrams_plot)
+
+recognise_bigrams_plot
+
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-bigram-not-recognise-plot 
+#| fig-width: 15
+#| fig-height: 12.5
+#| fig-cap: Pairs of consecutive words (bigrams) used in naming exercises by those who did not recognise the exercise (note, names for exercises on each panel are the "textbook" names provided). *Only one respondent did not recognise the Flat Barbell Bench Press exercise but responded with "No" as the name, hence there being no bigrams for this.
+
+targets::tar_load(did_not_recognise_bigrams_plot)
+
+did_not_recognise_bigrams_plot
+
+```
+
+Lastly, the majority of participants agreed or strongly agreed that exercise names are important (74%), exercises are named inconsistently (63%), exercise names impact how information about exercise learned (69%), that they sometimes call the same exercise by different names (73%), and that a system standardizing exercise names would be beneficial (69%). The breakdown of responses can be seen in @fig-likert-plot.
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+#| label: fig-likert-plot 
+#| fig-width: 7.5
+#| fig-height: 5
+#| fig-cap: Distribution of responses to each Likert scale question.
+
+targets::tar_load(exercise_names_likert_plot)
+
+exercise_names_likert_plot
+
+```
+
+# Discussion
+The findings of this study further support that naming conventions for exercises are inconsistent [@jacksonStandardizationNomenclatureResistance2013; @nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021]. However, whilst most exercises were widely recognised, recognition influenced naming patterns: those who recognised exercises used more consistent, commonly shared terminology, whereas unrecognised exercises elicited more idiosyncratic naming. Equipment-related terms were consistently important when applicable, but other naming components (e.g., body position, body part, movement direction, unilateral/bilateral execution) varied substantially in importance. Bigrams showed that recognised exercises were typically labelled using “textbook” word pairings, while unrecognised exercises produced more variable combinations. Participants generally agreed that exercise names are important (74%), inconsistently used (63%), and influence learning (69%), many reported using multiple names for the same exercise (73%), and most supported standardization (69%).
+
+Term frequencies indicated quite clearly patterns resembling Zipf's law-like distributions suggesting that exercise language follows broader linguistic principles seen in natural language systems i.e., a small number of highly common terms coexist with a long tail of infrequently used variants. Indeed, our findings suggest that resistance exercise naming may be an emergent, socially learned system rather than a formally codified one and a result of cultural familiarity. Supporting this was the distribution of term frequencies between those who did and did not recognise exercises where the lack of long right tail for the former suggested more commonly shared terms whereas the latter were more likely to adopt idiosyncratic words. But, despite there being more commonly used words by those who recognised exercises and also that naming conventions appears to converge upon the "textbook" names used, there was still considerable inconsistency within this group and the majority of respondents also admitted that they use names inconsistently. Indeed, given a significant proportion of respondents were educated  or working in the field of resistance training, inconsistency may be a feature of language use in the field and not merely due to unfamiliarity. This suggests that, within the folk taxonomy of resistance exercise names, and groups that adopt this, flexibility may not hamper communication and there is acceptance and normalisation of naming flexibility.
+
+Although there is evidently considerably variability in language, emergent taxonomies and naming conventions still tend to adopt certain principles of classification [@berlinGeneralPrinciplesClassification1973; @berlinSpeculationsGrowthEthnobotanical1972; @brownGeneralPrinciplesBiological1976]. Within resistance exercise names there are a variety of word types that have been shown to be adopted [@nuzzoWordsPatternsThat2017]. However, although our results suggested that terms accurately identifying the equipment were important when naming an exercise which used that equipment, there was considerable variety in whether terms relating to other word categories exercises were grouped by were important when naming them (e.g., body position, body part, action performed, direction of action, or whether bilateral/unilateral). This may indicate that people prioritize equipment as the most visually or functionally salient feature of an exercise when communicating about it. The inclusion of the newly developed connected adaptive machines (i.e., Vitruvian) perhaps support this as, the term frequency-inverse equipment frequency suggested that the top five terms people used when attempting to name it related to guesses as to what type of equipment it might be, based on equipment terms that are already more familiar (e.g., *"band"*, *"cable"*; see [https://osf.io/c2zpj](https://osf.io/c2zpj)). 
+
+Whilst these results suggest the existence of a folk taxonomy with particular features already in use, the fact that there is considerable inconsistency in naming conventions necessarily creates greater opportunity for miscommunication and misunderstanding. It may be that within public and applied settings and groups the terminology adopted by individuals enables communication and understanding, but given the applied nature of exercise science as a field there is cross-communication that occurs between scientists and the public and practitioners. Within textbooks and research articles exercises are named inconsistently [@nuzzoWordsPatternsThat2017; @nuzzoInconsistentUseResistance2021] suggesting that scientists may already share a similar taxonomy—a feature of which is indeed inconsistency. However, different groups of exercise professionals may use different taxonomies. Most respondents agreed that a system standardising exercise names would be beneficial, but they also admitted that they name exercises inconsistently. Singular terms are not a necessary, but are a sufficient, condition for clear communication as it is quite natural for synonyms to be used and understood by communities; indeed our results suggest this may be the case as despite inconsistency most do recognise and converge on similar naming conventions. The results may support development of a hierarchical taxonomy rather than a single *“correct”* or *"standard"* name for each exercise. For example, exercises could be classified according to the word categories previously highlighted [@nuzzoWordsPatternsThat2017] with acceptable synonyms nested within broader categories. This approach may be more realistic than attempting to eliminate synonym use entirely, and it may facilitate communication across different groups and settings.
+
+Some limitations of the present study should be noted. Respondents to our survey were predominantly English-speaking and experienced with resistance exercise, either through education, employment, or their own resistance exercise experience. As such, this limits the generalisability of our findings to non-English speaking contexts and to individuals who have limited exercise knowledge or experience. Exercises were also presented to respondents as images and so the extent to which recognition and understanding might occur in live, audio/conversational, or purely written contexts is less clear. Future work could expand this to such contexts and also explore longitudinal language development in exercise nomenclature - e.g., through analyses of historical corpi. Lastly, it is unclear whether any attempt at standardisation in the face of the natural language use in these domains might improve communication and understanding in public, applied, or scientific contexts. As such, empirical work should be an essential part of any research programme that intends to introduce exercise name standardisation. Indeed, standardization may not be necessary for shared communication and understanding.
+
+# Conclusion
+Our findings suggest that naming of resistance exercise follows broad linguistic principles (e.g., Zipf’s law) and elements of a shared “folk taxonomy.”. Despite this, there was substantial inconsistency in exercise naming practices. However, whilst such a folk taxonomy might enable clear communication within public and applied settings, the development of standardized terminology or a formal scientific taxonomy might be warranted to ensure facilitation of communication and understanding across domains and settings. Alternatively, a hierarchical taxonomy and system of translation across synonyms in use already may be a valuable pursuit.
+# Funding Information
+
+No direct funding was received for this study.
+
+# Author Contributions
+
+JN and JS conceived the idea for the project and designed the methods. JN coordinated and oversaw the data collection including survey distribution. JS conducted the statistical analyses and produced data visualisations. JS drafted the initial manuscript. JN and JS contributed to editing the manuscript and approved the final manuscript.
+
+# Competing Interests
+
+JN was previously employed at Vitruvian – the company that designed the connective adaptative resistance exercise machines that were featured in some of the photographs in the current study.
+
+JS provides research consultancy through his company Steele Research Limited, is contracted currently by MacroFactor and Kieser Australia through Steele Research Limited, and has also received travel expenses and honoraria for speaking from fit20 International, Exercise School Portugal, and Discover Strength.
+
+The content does not necessarily represent the official views of the affiliations or contracting organisations listed.
+
+# Data and Supplementary Material Accessibility
+
+All data and code utilised for data preparation and analyses are available in either the Open Science Framework page for this project <https://osf.io/4uaqr/overview> or the corresponding GitHub repository <https://github.com/jamessteeleii/exercise_names_survey>.
+
+# References
+

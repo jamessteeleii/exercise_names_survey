@@ -38,7 +38,6 @@ list(
 
   # Analyses and plots
   tar_target(demographics_tbl, make_demographics_tbl(data)),
-  tar_target(counts_freqs_plot, plot_counts_freqs(tokens)),
   tar_target(freqs_recognise_plot, plot_freqs_recognise(tokens)),
   tar_target(freqs_exercise_plot, plot_freqs_exercise(tokens)),
   tar_target(
@@ -57,18 +56,6 @@ list(
   tar_target(exercise_names_likert_plot, plot_likert_exercise_names(data)),
 
   # Save plots
-  tar_target(
-    counts_freqs_plot_tiff,
-    ggsave(
-      counts_freqs_plot,
-      filename = "plots/counts_freqs_plot.tiff",
-      device = "tiff",
-      dpi = 300,
-      w = 15,
-      h = 5
-    )
-  ),
-
   tar_target(
     freqs_recognise_plot_tiff,
     ggsave(
@@ -112,8 +99,8 @@ list(
       filename = "plots/tf_ief_plot.tiff",
       device = "tiff",
       dpi = 300,
-      w = 10,
-      h = 10
+      w = 17.5,
+      h = 12.5
     )
   ),
 
